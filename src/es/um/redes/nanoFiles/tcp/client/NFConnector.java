@@ -54,24 +54,64 @@ public class NFConnector {
 	 */
 	public boolean downloadFile(String targetFileHashSubstr, File file) throws IOException {
 		boolean downloaded = false;
-		
-		int entero = 16;
+		/*
+		int entero = 20;
 		System.out.println("Enviamos al servidor el entero " + entero);
 		dos.writeInt(entero);
 		int respuesta = dis.readInt();
 		System.out.println("Respuesta del servidor: " + respuesta);
+		*/
+		
 		/*
 		 * TODO: Construir objetos PeerMessage que modelen mensajes con los valores
 		 * adecuados en sus campos (atributos), según el protocolo diseñado, y enviarlos
 		 * al servidor a través del "dos" del socket mediante el método
 		 * writeMessageToOutputStream.
 		 */
+		byte opcode = PeerMessageOps.OPCODE_FILE_REQUEST;
+		int hashLength = targetFileHashSubstr.length();
+		byte[] hash = targetFileHashSubstr.getBytes();
+		PeerMessage request = new PeerMessage(opcode, hashLength, hash);
+		request.writeMessageToOutputStream(dos);
 		/*
 		 * TODO: Recibir mensajes del servidor a través del "dis" del socket usando
 		 * PeerMessage.readMessageFromInputStream, y actuar en función del tipo de
 		 * mensaje recibido, extrayendo los valores necesarios de los atributos del
 		 * objeto (valores de los campos del mensaje).
 		 */
+		PeerMessage response = PeerMessage.readMessageFromInputStream(dis);
+		opcode = response.getOpcode(); // Reutilizamos la variable opcode para almacenar el de la respuesta
+		switch(opcode) {
+		case PeerMessageOps.OPCODE_FILE_NOT_FOUND:
+			System.out.println("El hash " + targetFileHashSubstr + " no se corresponde con ningún archivo");
+			break;
+		case PeerMessageOps.OPCODE_SEND_FILE:
+			System.out.println("Datos recibidos");
+			System.out.println("Escribiendo contenido en el fichero " + file.getName() + "...");
+			FileOutputStream fos = new FileOutputStream(file);
+			fos.write(response.getValor());
+			fos.close();
+			System.out.println("Hecho");
+			
+			System.out.println("Esperando confirmación del servidor...");
+			PeerMessage confirmation = PeerMessage.readMessageFromInputStream(dis); // Si, reutilizamos response
+			if(confirmation.getOpcode() == PeerMessageOps.OPCODE_FILE_SENT_CONFIRMATION) {
+				System.out.println("El trozo de hash del fichero solicitado: " + targetFileHashSubstr);
+				System.out.println("El hash completo según la confirmación: " 
+						+ new String(confirmation.getValor()));
+				String receivedHash = FileDigest.computeFileChecksumString(file.getName());
+				System.out.println("El hash correspondiente al fichero recibido: "
+						+ receivedHash);
+				downloaded = true;
+			} else {
+				System.err.println("ERROR: FILE_SENT_CONFIRMATION expected");
+			}
+			break;
+		default:
+			System.err.println("Unexpected response from server\nopcode: " + opcode);
+			break;
+		}
+		
 		/*
 		 * TODO: Para escribir datos de un fichero recibidos en un mensaje, se puede
 		 * crear un FileOutputStream a partir del parámetro "file" para escribir cada
