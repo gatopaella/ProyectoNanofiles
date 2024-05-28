@@ -79,6 +79,43 @@ public class NFConnector {
 		 * mensaje recibido, extrayendo los valores necesarios de los atributos del
 		 * objeto (valores de los campos del mensaje).
 		 */
+		
+		boolean receivingFile = true;
+		FileOutputStream fos = new FileOutputStream(file); // Abrimos el fichero
+		while(receivingFile) {
+			PeerMessage response = PeerMessage.readMessageFromInputStream(dis);
+			opcode = response.getOpcode();
+			switch(opcode) {
+			case PeerMessageOps.OPCODE_FILE_NOT_FOUND:
+				System.out.println("El hash " + targetFileHashSubstr + " no se corresponde con ningún archivo");
+				receivingFile = false;
+				break;
+			case PeerMessageOps.OPCODE_SEND_FILE:
+				System.out.println("Datos recibidos");
+				System.out.println("Escribiendo contenido en el fichero " + file.getName() + "...");
+				fos.write(response.getValor());
+				break;
+			case PeerMessageOps.OPCODE_FILE_SENT_CONFIRMATION:
+				System.out.println("Descarga completada");
+				System.out.println("El trozo de hash del fichero solicitado: " + targetFileHashSubstr);
+				System.out.println("El hash completo según la confirmación: " 
+						+ new String(response.getValor()));
+				String receivedHash = FileDigest.computeFileChecksumString(file.getName());
+				System.out.println("El hash correspondiente al fichero recibido: "
+						+ receivedHash);
+				downloaded = true;
+				receivingFile = false;
+				break;
+			default:
+				System.err.println("Unexpected response from server\nopcode: " + opcode);
+				receivingFile = false;
+				break;
+			}
+				
+		}
+		fos.close(); // Cerramos el fichero
+		
+		/*ESTO LO QUE HICE EL 27/5/2024
 		PeerMessage response = PeerMessage.readMessageFromInputStream(dis);
 		opcode = response.getOpcode(); // Reutilizamos la variable opcode para almacenar el de la respuesta
 		switch(opcode) {
@@ -111,7 +148,8 @@ public class NFConnector {
 			System.err.println("Unexpected response from server\nopcode: " + opcode);
 			break;
 		}
-		
+		C'EST FINI
+		*/
 		/*
 		 * TODO: Para escribir datos de un fichero recibidos en un mensaje, se puede
 		 * crear un FileOutputStream a partir del parámetro "file" para escribir cada

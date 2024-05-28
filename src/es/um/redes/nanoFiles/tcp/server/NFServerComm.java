@@ -17,6 +17,8 @@ import es.um.redes.nanoFiles.tcp.message.PeerMessageOps;
 import es.um.redes.nanoFiles.util.FileInfo;
 
 public class NFServerComm {
+	
+	private static int MAX_SENT_SIZE = 32768; // 32KiB
 
 	public static void serveFilesToClient(Socket socket) {
 		/*
@@ -34,14 +36,18 @@ public class NFServerComm {
 			*/
 			
 			//TODO la condición del while tengo que modificarla y maybe añadir un mensaje de desconexión
-			while(!socket.isClosed()) { // Mientras el cliente esté conectado
+			boolean isSendingFiles = true;
+			while(isSendingFiles) {
+				
 				PeerMessage msgFromClient = PeerMessage.readMessageFromInputStream(dis);
 				byte opcode = msgFromClient.getOpcode();
+				
 				switch(opcode) {
 				case PeerMessageOps.OPCODE_FILE_REQUEST:
 					String hashSubstr = new String(msgFromClient.getValor());
 					FileInfo files[] = NanoFiles.db.getFiles();
 					FileInfo matchingFiles[] = FileInfo.lookupHashSubstring(files, hashSubstr);
+					
 					if(matchingFiles.length == 0) {
 						System.out.println("No file matches the hash substring " + hashSubstr);
 						PeerMessage responseToClient = new PeerMessage(PeerMessageOps.OPCODE_FILE_NOT_FOUND);
@@ -50,6 +56,31 @@ public class NFServerComm {
 						//TODO gestionar esto bien, quizás con una respuesta de control sobre ambiguedad
 						
 					} else {
+						String completeHash = matchingFiles[0].fileHash;
+						long fileSize = matchingFiles[0].fileSize;
+						String path = matchingFiles[0].filePath;
+						System.out.println("File found: " + path);
+						File fileToSend = new File(path);
+						FileInputStream fis = new FileInputStream(fileToSend);
+						
+						int posInFile = 0;
+						while(posInFile < fileSize) {
+							int sentSize = (int) Math.min(MAX_SENT_SIZE, fileSize-posInFile);
+							byte fileData[] = new byte[sentSize];
+							fis.read(fileData);
+							posInFile += sentSize;
+							PeerMessage responseToClient = new PeerMessage(PeerMessageOps.OPCODE_SEND_FILE,
+																			sentSize, fileData);
+							responseToClient.writeMessageToOutputStream(dos);
+						}
+						fis.close();
+						PeerMessage confirmation = new PeerMessage(PeerMessageOps.OPCODE_FILE_SENT_CONFIRMATION,
+																	(int) completeHash.length(),
+																	completeHash.getBytes());
+						confirmation.writeMessageToOutputStream(dos);
+						
+						isSendingFiles = false;
+						/*
 						String completeHash = matchingFiles[0].fileHash;
 						int fileSize = (int) matchingFiles[0].fileSize;
 						String path = matchingFiles[0].filePath;
@@ -68,12 +99,15 @@ public class NFServerComm {
 																	(int) completeHash.length(), 
 																	completeHash.getBytes());
 						confirmation.writeMessageToOutputStream(dos);
+						*/
 					}
 					break;
 				default:
 					System.err.println("ERROR: No treatment for the received message");
 				}
 			}
+			dis.close();
+			dos.close();
 			
 		} catch (IOException e) {
 			System.out.println("An exception ocurred while serving files to client");
