@@ -1,9 +1,9 @@
 package es.um.redes.nanoFiles.tcp.server;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketTimeoutException;
 
 /**
  * Servidor que se ejecuta en un hilo propio. Creará objetos
@@ -14,16 +14,21 @@ public class NFServer implements Runnable {
 	private ServerSocket serverSocket = null;
 	private boolean stopServer = false;
 	private static final int SERVERSOCKET_ACCEPT_TIMEOUT_MILISECS = 1000;
+	
+	private static final int PORT = 10000;
 
 	public NFServer() throws IOException {
 		/*
 		 * TODO: Crear un socket servidor y ligarlo a cualquier puerto disponible
 		 */
-
-
-
+		serverSocket = new ServerSocket();
+		serverSocket.bind(null); // creo que esto es ligarlo a un puerto disponible cualquiera
 	}
 
+	public int getPort() {
+		if(serverSocket == null) return -1;
+		return serverSocket.getLocalPort();
+	}
 	/**
 	 * Método que crea un socket servidor y ejecuta el hilo principal del servidor,
 	 * esperando conexiones de clientes.
@@ -35,6 +40,21 @@ public class NFServer implements Runnable {
 		 * TODO: Usar el socket servidor para esperar conexiones de otros peers que
 		 * soliciten descargar ficheros
 		 */
+		//System.out.println("\nServer is listening on port " + serverSocket.getLocalPort());
+		try {
+			while(true) {
+				Socket clientSocket = serverSocket.accept();
+				System.out.println("\nNew client connected: " +
+						clientSocket.getInetAddress().toString() + ":" + clientSocket.getPort());
+				
+				NFServerThread serverThread = new NFServerThread(clientSocket);
+				serverThread.start();
+			}
+			
+		} catch (IOException e) {
+			System.out.println("Server exception: " + e.getMessage());
+			e.printStackTrace();
+		}
 		/*
 		 * TODO: Al establecerse la conexión con un peer, la comunicación con dicho
 		 * cliente se hace en el método NFServerComm.serveFilesToClient(socket), al cual

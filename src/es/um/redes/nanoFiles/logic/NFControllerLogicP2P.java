@@ -6,6 +6,7 @@ import java.net.InetSocketAddress;
 import java.util.LinkedList;
 
 import es.um.redes.nanoFiles.tcp.client.NFConnector;
+import es.um.redes.nanoFiles.tcp.server.NFServer;
 import es.um.redes.nanoFiles.tcp.server.NFServerSimple;
 
 
@@ -14,10 +15,11 @@ public class NFControllerLogicP2P {
 	 * TODO: Para bgserve, se necesita un atributo NFServer que actuará como
 	 * servidor de ficheros en segundo plano de este peer
 	 */
-
+	NFServer bgServer;
 
 
 	protected NFControllerLogicP2P() {
+		bgServer = null;
 	}
 
 	/**
@@ -55,19 +57,33 @@ public class NFControllerLogicP2P {
 	 */
 	protected boolean backgroundServeFiles() {
 		/*
-		 * TODO: Comprobar que no existe ya un objeto NFServer previamente creado, en
+		 *: Comprobar que no existe ya un objeto NFServer previamente creado, en
 		 * cuyo caso el servidor ya está en marcha. Si no lo está, crear objeto servidor
 		 * NFServer y arrancarlo en segundo plano creando un nuevo hilo. Finalmente,
 		 * comprobar que el servidor está escuchando en un puerto válido (>0) e imprimir
 		 * mensaje informando sobre el puerto, y devolver verdadero.
 		 */
+		if (bgServer != null) {
+			System.out.println("El servidor ya está en marcha");
+			return true;
+		} else {
+			try {
+				bgServer = new NFServer();
+				Thread th = new Thread(bgServer);
+				int port = bgServer.getPort();
+				if(port <= 0) return false;
+				System.out.println("Server listening on port " + port);
+				th.start();
+				return true;
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 		/*
-		 * TODO: Las excepciones que puedan lanzarse deben ser capturadas y tratadas en
+		 * : Las excepciones que puedan lanzarse deben ser capturadas y tratadas en
 		 * este método. Si se produce una excepción de entrada/salida (error del que no
 		 * es posible recuperarse), se debe informar sin abortar el programa
 		 */
-
-
 
 		return false;
 	}
@@ -162,10 +178,10 @@ public class NFControllerLogicP2P {
 	public int getServerPort() {
 		int port = 0;
 		/*
-		 * TODO: Devolver el puerto de escucha de nuestro servidor de ficheros en
+		 * Devolver el puerto de escucha de nuestro servidor de ficheros en
 		 * segundo plano
 		 */
-
+		port = bgServer.getPort();
 
 
 		return port;

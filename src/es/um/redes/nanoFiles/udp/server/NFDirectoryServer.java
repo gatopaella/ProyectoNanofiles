@@ -28,18 +28,20 @@ public class NFDirectoryServer {
 	 * Estructura para guardar los nicks de usuarios registrados, y clave de sesión
 	 * 
 	 */
-	private HashMap<String, Integer> nicks;
+	private HashMap<String, Integer> nicks; // Nombre lioso de narices
 	/**
 	 * Estructura para guardar las claves de sesión y sus nicks de usuario asociados
 	 * 
 	 */
-	private HashMap<Integer, String> sessionKeys;
+	private HashMap<Integer, String> sessionKeys; // Nombre confuso de narices
+	
 	/*
 	 * TODO: Añadir aquí como atributos las estructuras de datos que sean necesarias
 	 * para mantener en el directorio cualquier información necesaria para la
 	 * funcionalidad del sistema nanoFilesP2P: ficheros publicados, servidores
 	 * registrados, etc.
 	 */
+	private HashMap<Integer, Integer> ports;
 
 	/**
 	 * Generador de claves de sesión aleatorias (sessionKeys)
@@ -68,6 +70,8 @@ public class NFDirectoryServer {
 		 */
 		nicks = new HashMap<String, Integer>();
 		sessionKeys = new HashMap<Integer, String>();
+		
+		ports = new HashMap<Integer, Integer>();
 
 		if (NanoFiles.testMode) { // Esto para el primer / segundo boletín
 			if (socket == null || nicks == null || sessionKeys == null) {
@@ -292,8 +296,8 @@ public class NFDirectoryServer {
 				response = new DirMessage(DirMessageOps.OPERATION_SENDUSERLIST);
 				HashMap<String, Boolean> userlist = new HashMap<>();
 				for(String user : sessionKeys.values()) {
-					userlist.put(user, false);
-					//TODO cuando implemente servidores esto hay que retocarlo
+					boolean isServer = ports.containsKey(key);
+					userlist.put(user, isServer);
 				}
 				response.setUserlist(userlist);
 				System.out.println("Mandando la lista de usuarios" + userlist);
@@ -303,6 +307,20 @@ public class NFDirectoryServer {
 			}
 			
 			break;
+		}
+		case DirMessageOps.OPERATION_REGISTER_SERVER_PORT: {
+			int key = msg.getKey();
+			int peerPort = msg.getPort();
+			if (sessionKeys.containsKey(key) && peerPort > 0) {
+				ports.put(key, peerPort);
+				response = new DirMessage(DirMessageOps.OPERATION_PORTOK);
+			} else if (peerPort > 0) {
+				response = new DirMessage(DirMessageOps.OPERATION_INVALIDKEY);
+				System.out.println("La clave " + key + " no está registrada, melón");
+			} else {
+				response = new DirMessage(DirMessageOps.OPERATION_INVALIDPORT);
+				System.out.println("NANI... IMPOSIBLE... no he visto un puerto negativo desde la Era Heian");
+			}
 		}
 		default:
 			System.out.println("Unexpected message operation: \"" + operation + "\"");

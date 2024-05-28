@@ -266,7 +266,7 @@ public class DirectoryConnector {
 	 *         no pudo satisfacer nuestra solicitud
 	 */
 	public boolean getUserList() {
-		LinkedList<String> userlist = new LinkedList<>();
+		//LinkedList<String> userlist = new LinkedList<>();
 		// TODO: Ver TODOs en logIntoDirectory y seguir esquema similar
 		boolean success = false;
 		Map<String, Boolean> userMap;
@@ -291,14 +291,13 @@ public class DirectoryConnector {
 		String strReceived = new String(messageReceivedInBytes);
 		DirMessage messageReceived = DirMessage.fromString(strReceived);
 		
-		userMap = messageReceived.getUserlist();
-		for (String user : userMap.keySet()) {
-			userlist.add(user);
-		}
 		
 		if (messageReceived.getOperation().equals(DirMessageOps.OPERATION_SENDUSERLIST)) {
-			System.out.println("Usuarios en el directorio:\n" + userlist);
-			success = true;
+			userMap = messageReceived.getUserlist();
+			for(String user : userMap.keySet()) {
+				System.out.println("user: " + user);
+				System.out.println("is server: " + userMap.get(user));
+			}
 		} else {
 			System.out.println("No se ha podido obtener la lista de usuarios");
 			System.out.println("Respuesta del directorio:");
@@ -365,8 +364,31 @@ public class DirectoryConnector {
 		// TODO: Ver TODOs en logIntoDirectory y seguir esquema similar
 		boolean success = false;
 
-
-
+		DirMessage messageToSend = new DirMessage(DirMessageOps.OPERATION_REGISTER_SERVER_PORT);
+		messageToSend.setKey(sessionKey);
+		messageToSend.setPort(serverPort);
+		String strToSend = messageToSend.toString();
+		byte[] bytesToSend = strToSend.getBytes();
+		System.out.print("El mensaje para registrar el puerto es:\n" + strToSend);
+		
+		byte[] bytesReceived = sendAndReceiveDatagrams(bytesToSend);
+		String strReceived = new String(bytesReceived);
+		DirMessage messageReceived = DirMessage.fromString(strReceived);
+		String operation = messageReceived.getOperation();
+		System.out.println("Campo operation = " + operation);
+		
+		if(operation.equals(DirMessageOps.OPERATION_PORTOK)) {
+			success = true;
+			System.out.println("Puerto registrado correctamente");
+		} else if (operation.equals(DirMessageOps.OPERATION_INVALIDPORT)) {
+			System.out.println("ERRPR: port " + messageToSend.getPort() + " not valid");
+		} else if (operation.equals(DirMessageOps.OPERATION_INVALIDKEY)) {
+			System.out.println("ERROR: key " + messageToSend.getKey() + " not valid");
+		} else {
+			System.err.println("ERROR: unexpected response from directory:");
+			System.out.print(strReceived);
+		}
+		
 		return success;
 	}
 

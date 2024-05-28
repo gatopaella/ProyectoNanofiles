@@ -27,6 +27,7 @@ public class DirMessage {
 	private static final String FIELDNAME_KEY = "key";
 	private static final String FIELDNAME_USER = "user";
 	private static final String FIELDNAME_ISSERVER = "isServer";
+	private static final String FIELDNAME_PORT = "port";
 	/*
 	 * TODO: Definir de manera simbólica los nombres de todos los campos que pueden
 	 * aparecer en los mensajes de este protocolo (formato campo:valor)
@@ -44,17 +45,15 @@ public class DirMessage {
 	//TODO ¿Inicializarlos por defecto?
 	private String nickname;
 	private int key;
+	private int port;
 	private HashMap<String, Boolean> userlist;
 	
 	public static final int LOGIN_FAILED_KEY = -1;
-
 
 	public DirMessage(String op) {
 		operation = op;
 		userlist = new HashMap<String, Boolean>();
 	}
-
-
 
 
 	/*
@@ -76,6 +75,11 @@ public class DirMessage {
 		this.key = key;
 	}
 	
+	public void setPort(int port) {
+		//TODO comprobar que el campo existe en el mensaje escogido
+		this.port = port;
+	}
+	
 	public void setUserlist(HashMap<String, Boolean> userlist) {
 		//TODO comprobar que este campo está en el mensaje
 		this.userlist = new HashMap<String, Boolean>(userlist);
@@ -91,6 +95,10 @@ public class DirMessage {
 	
 	public int getKey() {
 		return key;
+	}
+	
+	public int getPort() {
+		return port;
 	}
 
 	public Map<String, Boolean> getUserlist() {
@@ -148,6 +156,10 @@ public class DirMessage {
 				m.addUserToList(user, Boolean.parseBoolean(value));
 				break;
 			}
+			case FIELDNAME_PORT: {
+				m.setPort(Integer.parseInt(value));
+				break;
+			}
 			default:
 				System.err.println("PANIC: DirMessage.fromString - message with unknown field name " + fieldName);
 				System.err.println("Message was:\n" + message);
@@ -201,13 +213,23 @@ public class DirMessage {
 			}
 			break;
 		}
+		case DirMessageOps.OPERATION_REGISTER_SERVER_PORT: {
+			sb.append(FIELDNAME_KEY + DELIMITER + key + END_LINE);
+			sb.append(FIELDNAME_PORT + DELIMITER + port + END_LINE);
+			break;
+		}
+		case DirMessageOps.OPERATION_PORTOK: {
+			break;
+		}
 		case DirMessageOps.OPERATION_INVALIDNICKNAME: {
 			break;
 		}
 		case DirMessageOps.OPERATION_INVALIDKEY: {
 			break;
 		}
-
+		case DirMessageOps.OPERATION_INVALIDPORT: {
+			break;
+		}
 		default:
 			throw new IllegalArgumentException("Unexpected value: " + operation);
 		}
