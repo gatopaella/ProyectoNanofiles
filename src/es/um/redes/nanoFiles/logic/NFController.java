@@ -19,6 +19,8 @@ public class NFController {
 	/*
 	 * TODO: Añadir más constantes que representen los estados del autómata del
 	 * cliente de directorio.
+	 * 
+	 * LOGGED_AS_SERVER
 	 */
 
 

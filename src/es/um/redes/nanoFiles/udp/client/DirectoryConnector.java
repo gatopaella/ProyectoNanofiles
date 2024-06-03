@@ -405,7 +405,42 @@ public class DirectoryConnector {
 		InetSocketAddress serverAddr = null;
 		// TODO: Ver TODOs en logIntoDirectory y seguir esquema similar
 
-
+		DirMessage messageToSend = new DirMessage(DirMessageOps.OPERATION_GET_SERVER_ADDRESS);
+		messageToSend.setKey(sessionKey);
+		messageToSend.setNickname(nick);
+		String strToSend = messageToSend.toString();
+		byte[] bytesToSend = strToSend.getBytes();
+		
+		System.out.print("La solicitud de dirección es: " + strToSend);
+		
+		byte[] bytesReceived = sendAndReceiveDatagrams(bytesToSend);
+		String strReceived = new String(bytesReceived);
+		DirMessage messageReceived = DirMessage.fromString(strReceived);
+		
+		String operation = messageReceived.getOperation();
+		System.out.print("Mensaje recibido: " + strReceived);
+		
+		if(operation.equals(DirMessageOps.OPERATION_SEND_SERVER_ADDRESS)) {
+			try {
+				InetAddress serverIp = InetAddress.getByName(messageReceived.getIpAddress().substring(1));
+				int serverPort = messageReceived.getPort();
+				System.out.println("Received address: " + serverIp + ":" + serverPort);
+				serverAddr = new InetSocketAddress(serverIp, serverPort);
+			} catch (Exception e) {
+				e.printStackTrace();
+				System.out.println("Error obtaining the address");
+				System.out.println("Returning null...");
+			}
+		} else if (operation.equals(DirMessageOps.OPERATION_INVALIDKEY)) {
+			System.out.println("Error during server address request: invalid key");
+			System.out.println("Returning value null...");
+		} else if (operation.equals(DirMessageOps.OPERATION_INVALIDNICKNAME)) {
+			System.out.println("Error during server address request:");
+			System.out.println("peer " + nick + " is not serving files");
+			System.out.println("Returning value null...");
+		} else {
+			System.err.println("Error during server address request: unexpected response from directory");
+		}
 
 		return serverAddr;
 	}

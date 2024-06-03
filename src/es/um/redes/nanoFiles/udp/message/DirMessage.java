@@ -27,6 +27,7 @@ public class DirMessage {
 	private static final String FIELDNAME_KEY = "key";
 	private static final String FIELDNAME_USER = "user";
 	private static final String FIELDNAME_ISSERVER = "isServer";
+	private static final String FIELDNAME_IP = "ipAddress";
 	private static final String FIELDNAME_PORT = "port";
 	/*
 	 * TODO: Definir de manera simbólica los nombres de todos los campos que pueden
@@ -45,6 +46,7 @@ public class DirMessage {
 	//TODO ¿Inicializarlos por defecto?
 	private String nickname;
 	private int key;
+	private String ipAddress;
 	private int port;
 	private HashMap<String, Boolean> userlist;
 	
@@ -75,6 +77,10 @@ public class DirMessage {
 		this.key = key;
 	}
 	
+	public void setIpAddress(String ipAddress) {
+		this.ipAddress = ipAddress;
+	}
+	
 	public void setPort(int port) {
 		//TODO comprobar que el campo existe en el mensaje escogido
 		this.port = port;
@@ -95,6 +101,10 @@ public class DirMessage {
 	
 	public int getKey() {
 		return key;
+	}
+	
+	public String getIpAddress() {
+		return ipAddress;
 	}
 	
 	public int getPort() {
@@ -156,6 +166,10 @@ public class DirMessage {
 				m.addUserToList(user, Boolean.parseBoolean(value));
 				break;
 			}
+			case FIELDNAME_IP: {
+				m.setIpAddress(value);
+				break;
+			}
 			case FIELDNAME_PORT: {
 				m.setPort(Integer.parseInt(value));
 				break;
@@ -215,6 +229,16 @@ public class DirMessage {
 		}
 		case DirMessageOps.OPERATION_REGISTER_SERVER_PORT: {
 			sb.append(FIELDNAME_KEY + DELIMITER + key + END_LINE);
+			sb.append(FIELDNAME_PORT + DELIMITER + port + END_LINE);
+			break;
+		}
+		case DirMessageOps.OPERATION_GET_SERVER_ADDRESS: {
+			sb.append(FIELDNAME_KEY + DELIMITER + key + END_LINE);
+			sb.append(FIELDNAME_NICKNAME + DELIMITER + nickname + END_LINE);
+			break;
+		}
+		case DirMessageOps.OPERATION_SEND_SERVER_ADDRESS: {
+			sb.append(FIELDNAME_IP + DELIMITER + ipAddress + END_LINE);
 			sb.append(FIELDNAME_PORT + DELIMITER + port + END_LINE);
 			break;
 		}

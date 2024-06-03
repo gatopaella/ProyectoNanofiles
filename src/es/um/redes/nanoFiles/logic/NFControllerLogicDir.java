@@ -174,9 +174,7 @@ public class NFControllerLogicDir {
 		 * sirviendo ficheros. Si la operación fracasa (no se obtiene una respuesta con
 		 * IP:puerto válidos), se debe devolver null.
 		 */
-		InetSocketAddress serverAddr = null;
-
-
+		InetSocketAddress serverAddr =  directoryConnector.lookupServerAddrByUsername(nickname);
 
 		return serverAddr;
 	}

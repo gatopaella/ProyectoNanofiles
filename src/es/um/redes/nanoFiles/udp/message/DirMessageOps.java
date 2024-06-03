@@ -15,6 +15,8 @@ public class DirMessageOps {
 	public static final String OPERATION_SENDUSERLIST = "sendUserlist";
 	public static final String OPERATION_REGISTER_SERVER_PORT = "registerServerPort";
 	public static final String OPERATION_PORTOK = "portOK";
+	public static final String OPERATION_GET_SERVER_ADDRESS = "getServerAddress";
+	public static final String OPERATION_SEND_SERVER_ADDRESS = "sendServerAddress";
 	
 	public static final String OPERATION_INVALIDKEY = "invalidKey";
 	public static final String OPERATION_INVALIDNICKNAME = "invalidNickname";

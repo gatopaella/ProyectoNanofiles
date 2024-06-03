@@ -12,19 +12,28 @@ public class NFServerSimple {
 
 	private static final int SERVERSOCKET_ACCEPT_TIMEOUT_MILISECS = 1000;
 	private static final String STOP_SERVER_COMMAND = "fgstop";
-	private static final int PORT = 10000;
+	private static final int DEF_PORT = 10000; // Default port
+	private static final int MAX_LOCAL_SERVERS = 100;
+	
 	private ServerSocket serverSocket = null;
+	private int port;
 
 	public NFServerSimple() throws IOException {
-		/*
-		 *Crear una direción de socket a partir del puerto especificado
-		 */
-		InetSocketAddress serverSocketAdress = new InetSocketAddress(PORT);
-		/*
-		 *Crear un socket servidor y ligarlo a la dirección de socket anterior
-		 */
-		serverSocket = new ServerSocket();
-		serverSocket.bind(serverSocketAdress);
+		boolean binded = false;
+		port = DEF_PORT;
+		while(!binded && port < DEF_PORT + MAX_LOCAL_SERVERS) {
+			try {
+				InetSocketAddress serverSocketAdress = new InetSocketAddress(port);
+				serverSocket = new ServerSocket();
+				serverSocket.bind(serverSocketAdress);
+				binded = true;
+			} catch (IOException e) {
+				//e.printStackTrace();
+				System.out.println("Port" + port + " is already being used...");
+				port++;
+			}
+		}
+		if (port >= DEF_PORT + MAX_LOCAL_SERVERS) throw new IOException();
 	}
 
 	/**
@@ -44,7 +53,7 @@ public class NFServerSimple {
 		}
 		
 		
-		System.out.println("\nServer is listening on port " + PORT);
+		System.out.println("\nServer is listening on port " + port);
 		try {
 			/*
 			 * Usar el socket servidor para esperar conexiones de otros peers que
@@ -66,8 +75,12 @@ public class NFServerSimple {
 			e.printStackTrace();
 		}
 
-
-
+		try {
+			serverSocket.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
 		System.out.println("NFServerSimple stopped. Returning to the nanoFiles shell...");
 	}
 }
