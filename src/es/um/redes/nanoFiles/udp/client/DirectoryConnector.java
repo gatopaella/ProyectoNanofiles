@@ -391,6 +391,31 @@ public class DirectoryConnector {
 		
 		return success;
 	}
+	
+	public boolean UnregisterServerPort() {
+		boolean success = false;
+		
+		DirMessage msgToSend = new DirMessage(DirMessageOps.OPERATION_REMOVE_SERVER_PORT);
+		msgToSend.setKey(sessionKey);
+		String strToSend = msgToSend.toString();
+		byte[] bytesToSend = strToSend.getBytes();
+		
+		byte[] bytesReceived = sendAndReceiveDatagrams(bytesToSend);
+		String strReceived = new String(bytesReceived);
+		DirMessage msgReceived = DirMessage.fromString(strReceived);
+		
+		String operation = msgReceived.getOperation();
+		if (operation.equals(DirMessageOps.OPERATION_REMOVE_PORT_OK)) {
+			System.out.println("Server stopped");
+			success = true;
+		} else if (operation.equals(DirMessageOps.OPERATION_INVALIDKEY)) {
+			System.out.println("ERROR: key " + msgToSend.getKey() + " not valid");
+		} else { // No tengo en cuenta el caso "no es un servidor" porque se encarga el autómata
+			System.err.println("ERROR: unexpected response from directory:");
+			System.out.print(strReceived);
+		}
+		return success;
+	}
 
 	/**
 	 * Método para obtener del directorio la dirección de socket (IP:puerto)

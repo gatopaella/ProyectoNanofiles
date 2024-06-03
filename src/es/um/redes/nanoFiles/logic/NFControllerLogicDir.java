@@ -285,11 +285,11 @@ public class NFControllerLogicDir {
 	 */
 	public boolean unregisterFileServer() {
 		/*
-		 * TODO: Comunicarse con el directorio (a través del directoryConnector) para
+		 * : Comunicarse con el directorio (a través del directoryConnector) para
 		 * darse de baja como servidor de ficheros. Se debe enviar la clave de sesión
 		 * para identificarse.
 		 */
-		boolean result = false;
+		boolean result = directoryConnector.UnregisterServerPort();
 
 
 

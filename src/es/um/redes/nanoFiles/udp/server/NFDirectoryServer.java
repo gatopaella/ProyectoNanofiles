@@ -326,6 +326,20 @@ public class NFDirectoryServer {
 			}
 			break;
 		}
+		case DirMessageOps.OPERATION_REMOVE_SERVER_PORT: {
+			int key = msg.getKey();
+			if (sessionKeys.containsKey(key)) {
+				servers.remove(key);
+				
+				response = new DirMessage(DirMessageOps.OPERATION_REMOVE_PORT_OK);
+				System.out.println("Enviando confirmación de stopserver");
+			} else {
+				response = new DirMessage(DirMessageOps.OPERATION_INVALIDKEY);
+				System.out.println("La clave " + key + " no está registrada, melón");
+			}
+			
+			break;
+		}
 		case DirMessageOps.OPERATION_GET_SERVER_ADDRESS: {
 			int key = msg.getKey();
 			String nick = msg.getNickname();

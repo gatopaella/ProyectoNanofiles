@@ -68,7 +68,7 @@ public class NFControllerLogicP2P {
 			return true;
 		} else {
 			try {
-				bgServer = new NFServer();
+				bgServer = new NFServer(); // NFServer implements runneable
 				Thread th = new Thread(bgServer);
 				int port = bgServer.getPort();
 				if(port <= 0) return false;
@@ -128,7 +128,6 @@ public class NFControllerLogicP2P {
 		 * este método. Si se produce una excepción de entrada/salida (error del que no
 		 * es posible recuperarse), se debe informar sin abortar el programa
 		 */
-
 
 
 		return result;
@@ -193,11 +192,9 @@ public class NFControllerLogicP2P {
 	 */
 	public void stopBackgroundFileServer() {
 		/*
-		 * TODO: Enviar señal para detener nuestro servidor de ficheros en segundo plano
+		 * Enviar señal para detener nuestro servidor de ficheros en segundo plano
 		 */
-
-
-
+		bgServer.closeServer();
 	}
 
 }

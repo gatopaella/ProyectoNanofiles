@@ -29,6 +29,16 @@ public class NFServer implements Runnable {
 		if(serverSocket == null) return -1;
 		return serverSocket.getLocalPort();
 	}
+	
+	public void closeServer() {
+		stopServer = true;
+		
+		try {
+			serverSocket.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 	/**
 	 * Método que crea un socket servidor y ejecuta el hilo principal del servidor,
 	 * esperando conexiones de clientes.
@@ -37,12 +47,12 @@ public class NFServer implements Runnable {
 	 */
 	public void run() {
 		/*
-		 * TODO: Usar el socket servidor para esperar conexiones de otros peers que
+		 * : Usar el socket servidor para esperar conexiones de otros peers que
 		 * soliciten descargar ficheros
 		 */
 		//System.out.println("\nServer is listening on port " + serverSocket.getLocalPort());
 		try {
-			while(true) {
+			while(!stopServer) {
 				Socket clientSocket = serverSocket.accept();
 				System.out.println("\nNew client connected: " +
 						clientSocket.getInetAddress().toString() + ":" + clientSocket.getPort());
@@ -53,15 +63,15 @@ public class NFServer implements Runnable {
 			
 		} catch (IOException e) {
 			System.out.println("Server exception: " + e.getMessage());
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 		/*
-		 * TODO: Al establecerse la conexión con un peer, la comunicación con dicho
+		 * : Al establecerse la conexión con un peer, la comunicación con dicho
 		 * cliente se hace en el método NFServerComm.serveFilesToClient(socket), al cual
 		 * hay que pasarle el socket devuelto por accept
 		 */
 		/*
-		 * TODO: (Opcional) Crear un hilo nuevo de la clase NFServerThread, que llevará
+		 * : (Opcional) Crear un hilo nuevo de la clase NFServerThread, que llevará
 		 * a cabo la comunicación con el cliente que se acaba de conectar, mientras este
 		 * hilo vuelve a quedar a la escucha de conexiones de nuevos clientes (para
 		 * soportar múltiples clientes). Si este hilo es el que se encarga de atender al

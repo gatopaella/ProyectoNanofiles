@@ -245,6 +245,13 @@ public class DirMessage {
 		case DirMessageOps.OPERATION_PORTOK: {
 			break;
 		}
+		case DirMessageOps.OPERATION_REMOVE_SERVER_PORT: {
+			sb.append(FIELDNAME_KEY + DELIMITER + key + END_LINE);
+			break;
+		}
+		case DirMessageOps.OPERATION_REMOVE_PORT_OK: {
+			break;
+		}
 		case DirMessageOps.OPERATION_INVALIDNICKNAME: {
 			break;
 		}
