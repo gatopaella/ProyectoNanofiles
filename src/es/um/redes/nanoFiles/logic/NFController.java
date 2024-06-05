@@ -16,6 +16,7 @@ public class NFController {
 	 */
 	private static final byte LOGGED_OUT = 0;
 	private static final byte LOGGED_IN = 1;
+	private static final byte LOGGED_AS_SERVER = 2;
 	/*
 	 * TODO: Añadir más constantes que representen los estados del autómata del
 	 * cliente de directorio.
@@ -240,18 +241,44 @@ public class NFController {
 			} // +Para que el método devuelva true, es imprescindible que el currentState sea LOGGED_OUT
 			break;
 		case NFCommands.COM_LOGOUT:
-			if (currentState != LOGGED_IN) {
+			if (currentState == LOGGED_OUT) {
 				commandAllowed = false;
 				System.err.println("* You cannot logout because you are not logged in the directory");
 			}
 			break;
 		case NFCommands.COM_USERLIST:
-			if (currentState != LOGGED_IN) {
+			if (currentState == LOGGED_OUT) {
 				commandAllowed = false;
 				System.err.println("* Invalid command: you are not logged in the directory");
 			}
 			break;
-
+		case NFCommands.COM_FGSERVE: {
+			if (currentState != LOGGED_IN) {
+				commandAllowed = false;
+				System.err.println("* Invalid command: you are either not logged in the directory or already serving files");
+			}
+			break;
+		}
+		case NFCommands.COM_BGSERVE: {
+			if (currentState != LOGGED_IN) {
+				commandAllowed = false;
+				System.err.println("* Invalid command: you are either not logged in the directory or already serving files");
+			}
+			break;
+		}
+		case NFCommands.COM_STOP_SERVER: {
+			if (currentState != LOGGED_AS_SERVER) {
+				commandAllowed = false;
+				System.err.println("* Invalid command: you are not registered as a server");
+			}
+			break;
+		}
+		case NFCommands.COM_PUBLISH:
+			if (currentState != LOGGED_AS_SERVER) {
+				commandAllowed = false;
+				System.out.println("Only servers can publish");
+			}
+			break;
 		default:
 			System.err.println("ERROR: undefined behaviour for " + currentCommand + " command!");
 		}
@@ -276,9 +303,14 @@ public class NFController {
 			currentState = LOGGED_OUT;
 			break;
 		}
-		// + Ojo que aquí tendremos que añadir más estados nosotros
-
-
+		case NFCommands.COM_BGSERVE: {
+			currentState = LOGGED_AS_SERVER;
+			break;
+		}
+		case NFCommands.COM_STOP_SERVER: {
+			currentState = LOGGED_IN;
+			break;
+		}
 		default:
 		}
 

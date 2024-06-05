@@ -2,7 +2,12 @@ package es.um.redes.nanoFiles.udp.message;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+
+import es.um.redes.nanoFiles.util.FileInfo;
+import es.um.redes.nanoFiles.util.FileInfoExtended;
 
 /**
  * Clase que modela los mensajes del protocolo de comunicación entre pares para
@@ -29,6 +34,12 @@ public class DirMessage {
 	private static final String FIELDNAME_ISSERVER = "isServer";
 	private static final String FIELDNAME_IP = "ipAddress";
 	private static final String FIELDNAME_PORT = "port";
+	private static final String FIELDNAME_FILENAME = "name";
+	private static final String FIELDNAME_FILEHASH = "hash";
+	private static final String FIELDNAME_FILESIZE = "size";
+	private static final String FIELDNAME_FILEPATH = "path";
+	private static final String FIELDNAME_SERVER = "server";
+	
 	/*
 	 * TODO: Definir de manera simbólica los nombres de todos los campos que pueden
 	 * aparecer en los mensajes de este protocolo (formato campo:valor)
@@ -49,12 +60,19 @@ public class DirMessage {
 	private String ipAddress;
 	private int port;
 	private HashMap<String, Boolean> userlist;
+	private LinkedList<FileInfo> filelist;
+	private LinkedList<FileInfoExtended> extendedFilelist;
+	private LinkedList<String> serverList;
+	private String hash;
 	
 	public static final int LOGIN_FAILED_KEY = -1;
 
 	public DirMessage(String op) {
 		operation = op;
 		userlist = new HashMap<String, Boolean>();
+		filelist = new LinkedList<FileInfo>();
+		serverList = new LinkedList<String>();
+		extendedFilelist = new LinkedList<FileInfoExtended>();
 	}
 
 
@@ -86,13 +104,30 @@ public class DirMessage {
 		this.port = port;
 	}
 	
-	public void setUserlist(HashMap<String, Boolean> userlist) {
+	public void setUserlist(Map<String, Boolean> userlist) {
 		//TODO comprobar que este campo está en el mensaje
 		this.userlist = new HashMap<String, Boolean>(userlist);
 	}
 	
+	public void setFilelist(List<FileInfo> filelist) {
+		this.filelist = new LinkedList<FileInfo>(filelist);
+	}
+	
+	
 	public void addUserToList(String nick, Boolean isServer) {
 		userlist.put(nick, isServer);
+	}
+	
+	public void setServerList(List<String> servers) {
+		this.serverList = new LinkedList<String>(servers);
+	}
+	
+	public void setHash(String hash) {
+		this.hash = hash;
+	}
+	
+	public void setExtendedFilelist(List<FileInfoExtended> extendedFilelist) {
+		this.extendedFilelist = new LinkedList<FileInfoExtended>(extendedFilelist);
 	}
 	
 	public String getNickname() {
@@ -113,6 +148,22 @@ public class DirMessage {
 
 	public Map<String, Boolean> getUserlist() {
 		return Collections.unmodifiableMap(userlist);
+	}
+	
+	public List<FileInfo> getFilelist() {
+		return Collections.unmodifiableList(filelist);
+	}
+	
+	public List<String> getServerList() {
+		return Collections.unmodifiableList(serverList);
+	}
+	
+	public String getHash() {
+		return hash;
+	}
+	
+	public List<FileInfoExtended> getExtendedFilelist() {
+		return Collections.unmodifiableList(extendedFilelist);
 	}
 	
 
@@ -138,6 +189,10 @@ public class DirMessage {
 		// Local variables to save data during parsing
 		DirMessage m = null;
 		String user = "INVALID_USER";
+		String filename = "INVALID_NAME";
+		String hash = "INVALID_HASH";
+		FileInfoExtended fileInfoExtended = null;
+		long size = -1;
 
 		for (String line : lines) {
 			int idx = line.indexOf(DELIMITER); // Posición del delimitador
@@ -174,11 +229,48 @@ public class DirMessage {
 				m.setPort(Integer.parseInt(value));
 				break;
 			}
+			case FIELDNAME_FILENAME: {
+				if (fileInfoExtended != null) {
+					m.extendedFilelist.add(fileInfoExtended);
+				}
+				filename = value;
+				break;
+			}
+			case FIELDNAME_FILEHASH: {
+				hash = value;
+				m.setHash(hash);
+				break;
+			}
+			case FIELDNAME_FILESIZE: {
+				size = Long.parseLong(value);
+				break;
+			}
+			case FIELDNAME_FILEPATH: {
+				String path = value;
+				m.filelist.add(new FileInfo(hash, filename, size, path));
+				if (m.operation.equals(DirMessageOps.OPERATION_SEND_FILELIST)) {
+					fileInfoExtended = new FileInfoExtended(new FileInfo(hash, filename, size, path));
+				}
+				break;
+			}
+			case FIELDNAME_SERVER: {
+				m.serverList.add(value);
+				
+				if (m.operation.equals(DirMessageOps.OPERATION_SEND_FILELIST)) {
+					fileInfoExtended.addNickToList(value);
+				}
+				
+				break;
+			}
 			default:
 				System.err.println("PANIC: DirMessage.fromString - message with unknown field name " + fieldName);
 				System.err.println("Message was:\n" + message);
 				System.exit(-1);
 			}
+		}
+		
+		if (fileInfoExtended != null) {
+			m.extendedFilelist.add(fileInfoExtended);
 		}
 
 		return m;
@@ -250,6 +342,47 @@ public class DirMessage {
 			break;
 		}
 		case DirMessageOps.OPERATION_REMOVE_PORT_OK: {
+			break;
+		}
+		case DirMessageOps.OPERATION_PUBLISH: {
+			sb.append(FIELDNAME_KEY + DELIMITER + key + END_LINE);
+			for (FileInfo file : filelist) {
+				sb.append(FIELDNAME_FILENAME + DELIMITER + file.fileName + END_LINE);
+				sb.append(FIELDNAME_FILEHASH + DELIMITER + file.fileHash + END_LINE);
+				sb.append(FIELDNAME_FILESIZE + DELIMITER + file.fileSize + END_LINE);
+				sb.append(FIELDNAME_FILEPATH + DELIMITER + file.filePath + END_LINE);
+			}
+			break;
+		}
+		case DirMessageOps.OPERATION_PUBLISHOK: {
+			break;
+		}
+		case DirMessageOps.OPERATION_SEARCH: {
+			sb.append(FIELDNAME_KEY + DELIMITER + key + END_LINE);
+			sb.append(FIELDNAME_FILEHASH + DELIMITER + hash + END_LINE);
+			break;
+		}
+		case DirMessageOps.OPERATION_SEARCH_RESULTS: {
+			for(String server : serverList) {
+				sb.append(FIELDNAME_SERVER + DELIMITER + server + END_LINE);
+			}
+			break;
+		}
+		case DirMessageOps.OPERATION_GET_FILELIST: {
+			sb.append(FIELDNAME_KEY + DELIMITER + key + END_LINE);
+			break;
+		}
+		case DirMessageOps.OPERATION_SEND_FILELIST: {
+			for(FileInfoExtended file : extendedFilelist) {
+				sb.append(FIELDNAME_FILENAME + DELIMITER + file.getFileInfo().fileName + END_LINE);
+				sb.append(FIELDNAME_FILEHASH + DELIMITER + file.getFileInfo().fileHash + END_LINE);
+				sb.append(FIELDNAME_FILESIZE + DELIMITER + file.getFileInfo().fileSize + END_LINE);
+				sb.append(FIELDNAME_FILEPATH + DELIMITER + file.getFileInfo().filePath + END_LINE);
+				for (String server : file.getNicklist()) {
+					sb.append(FIELDNAME_SERVER + DELIMITER + server + END_LINE);
+				}
+			}
+			
 			break;
 		}
 		case DirMessageOps.OPERATION_INVALIDNICKNAME: {

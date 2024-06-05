@@ -5,9 +5,11 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.LinkedList;
+import java.util.List;
 
 import es.um.redes.nanoFiles.application.NanoFiles;
 import es.um.redes.nanoFiles.udp.client.DirectoryConnector;
+import es.um.redes.nanoFiles.util.FileInfoExtended;
 
 public class NFControllerLogicDir {
 
@@ -109,9 +111,21 @@ public class NFControllerLogicDir {
 		 * por pantalla (método FileInfo.printToSysout). Devolver éxito/fracaso de la
 		 * operación.
 		 */
-		boolean result = false;
-
-
+		List<FileInfoExtended> filelist = directoryConnector.getFileList();
+		boolean result = filelist != null;
+		
+		if (result) {
+			for(FileInfoExtended file : filelist) {
+				System.out.println("file name: " + file.getFileInfo().fileName);
+				System.out.println("hash: " + file.getFileInfo().fileHash);
+				System.out.println("size: " + file.getFileInfo().fileSize);
+				System.out.println("servers sharing this file:");
+				for(String srver : file.getNicklist()) {
+					System.out.println(srver);
+				}
+				System.out.println();
+			}
+		}
 
 		return result;
 	}
@@ -150,7 +164,7 @@ public class NFControllerLogicDir {
 		 * la clave de sesión para identificarse. Devolver éxito/fracaso de la
 		 * operación.
 		 */
-		boolean result = false;
+		boolean result = directoryConnector.publishLocalFiles(NanoFiles.db.getFiles());
 
 
 
@@ -241,8 +255,8 @@ public class NFControllerLogicDir {
 		 * y obtener una lista con sus nicknames. Devolver éxito/fracaso de la
 		 * operación.
 		 */
-		boolean result = false;
-
+		List<String> nicklist = directoryConnector.getServerNicknamesSharingThisFile(fileHashSubstring);
+		boolean result = nicklist != null;
 
 
 		return result;

@@ -6,13 +6,17 @@ import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Map.Entry;
 import java.util.Random;
 
 import es.um.redes.nanoFiles.application.NanoFiles;
 import es.um.redes.nanoFiles.udp.message.DirMessage;
 import es.um.redes.nanoFiles.udp.message.DirMessageOps;
 import es.um.redes.nanoFiles.util.FileInfo;
+import es.um.redes.nanoFiles.util.FileInfoExtended;
 
 public class NFDirectoryServer {
 	/**
@@ -42,6 +46,9 @@ public class NFDirectoryServer {
 	 * registrados, etc.
 	 */
 	private HashMap<Integer, InetSocketAddress> servers;
+	
+	private HashMap<Integer, LinkedList<FileInfo>> files;
+	private HashMap<String, LinkedList<String>> serversByHash;
 
 	/**
 	 * Generador de claves de sesión aleatorias (sessionKeys)
@@ -72,6 +79,9 @@ public class NFDirectoryServer {
 		sessionKeys = new HashMap<Integer, String>();
 		
 		servers = new HashMap<Integer, InetSocketAddress>();
+		
+		files = new HashMap<Integer, LinkedList<FileInfo>>();
+		serversByHash = new HashMap<String, LinkedList<String>>();
 
 		if (NanoFiles.testMode) { // Esto para el primer / segundo boletín
 			if (socket == null || nicks == null || sessionKeys == null) {
@@ -328,8 +338,26 @@ public class NFDirectoryServer {
 		}
 		case DirMessageOps.OPERATION_REMOVE_SERVER_PORT: {
 			int key = msg.getKey();
+			String serverNick = sessionKeys.get(key);
 			if (sessionKeys.containsKey(key)) {
 				servers.remove(key);
+				
+				files.remove(key);
+				
+				Iterator<Entry<String, LinkedList<String>>> it = serversByHash.entrySet().iterator();
+				while(it.hasNext()) { // Para cada archivo
+					Entry<String, LinkedList<String>> entry = it.next();
+					entry.getValue().remove(serverNick); // Actualizamos que no lo está compartiendo
+					if (entry.getValue().isEmpty())
+						it.remove();
+				}
+				/*
+				for (String hash : serversByHash.keySet()) { // Para cada archivo
+					serversByHash.get(hash).remove(serverNick); // Actualizamos que no lo está compartiendo
+					if (serversByHash.get(hash).isEmpty())
+						serversByHash.remove(hash);
+				}
+				*/
 				
 				response = new DirMessage(DirMessageOps.OPERATION_REMOVE_PORT_OK);
 				System.out.println("Enviando confirmación de stopserver");
@@ -360,6 +388,87 @@ public class NFDirectoryServer {
 			} else { // Si lo que falla es que el peer no es servidor
 				response = new DirMessage(DirMessageOps.OPERATION_INVALIDNICKNAME);
 				System.out.println("El peer " + nick + " no está logueado o no es un servidor");
+			}
+			break;
+		}
+		case DirMessageOps.OPERATION_PUBLISH: {
+			int key = msg.getKey();
+			List<FileInfo> filelist = msg.getFilelist();
+			if (sessionKeys.containsKey(key)) {
+				LinkedList<FileInfo> filesToAdd = new LinkedList<>();
+				for(FileInfo file : filelist) {
+					filesToAdd.add(file); // Registrar los archivos en la lista del servidor
+					
+					String fileHash = file.fileHash; // Registrar que este peer sirve este archivo
+					if(!serversByHash.containsKey(fileHash)) {
+						serversByHash.put(fileHash, new LinkedList<String>());
+					}
+					String nick = sessionKeys.get(key);
+					if (!serversByHash.get(fileHash).contains(nick)) {
+						serversByHash.get(fileHash).add(nick);
+					} // Para que haciendo publish repetidas veces no aparezcan duplicados
+				}
+				files.put(key, filesToAdd);
+				System.out.println("Se han registrado los archivos publicados");
+				
+				response = new DirMessage(DirMessageOps.OPERATION_PUBLISHOK);
+				System.out.println("Enviando confirmación...");
+			} else {
+				System.out.println("key " + key + " not registered in directory");
+				response = new DirMessage(DirMessageOps.OPERATION_INVALIDKEY);
+			}
+			break;
+		}
+		case DirMessageOps.OPERATION_SEARCH: {
+			int key = msg.getKey();
+			String fileHash = msg.getHash();
+			LinkedList<String> serverList = new LinkedList<>();
+			if (sessionKeys.containsKey(key) && serversByHash.containsKey(fileHash)) {
+				response = new DirMessage(DirMessageOps.OPERATION_SEARCH_RESULTS);
+				for (String srver : serversByHash.get(fileHash)) { // Añade solo los que son servidores
+					if(servers.containsKey(nicks.get(srver))) {
+						serverList.add(srver);
+					}
+				}
+				response.setServerList(serverList);
+				System.out.println("Servidores encontrados : " + serverList);
+			}
+			if (serverList.size() == 0) {
+				System.out.println("there are no servers providing the file identified by hash " + fileHash);
+				System.out.println("returning empty list");
+				response = new DirMessage(DirMessageOps.OPERATION_SEARCH_RESULTS);
+				response.setServerList(new LinkedList<String>());
+			}
+			if (!sessionKeys.containsKey(key)) {
+				System.out.println("key " + key + " not registered in directory");
+				response = new DirMessage(DirMessageOps.OPERATION_INVALIDKEY);
+			}
+			
+			break;
+		}
+		case DirMessageOps.OPERATION_GET_FILELIST: {
+			int key = msg.getKey();
+			LinkedList<FileInfoExtended> filelist = new LinkedList<FileInfoExtended>();
+			if (sessionKeys.containsKey(key)) {
+				response = new DirMessage(DirMessageOps.OPERATION_SEND_FILELIST);
+				for(int serverKey : files.keySet()) {
+					List<FileInfo> filesPublishedByServer = files.get(serverKey);
+					for (FileInfo file : filesPublishedByServer) {
+						String fileHash = file.fileHash;
+						FileInfoExtended fileExtended = new FileInfoExtended(file);
+						List<String> fileServerList = serversByHash.get(fileHash);
+						for (String serverNick : fileServerList) {
+							if(servers.containsKey(nicks.get(serverNick))) {
+								fileExtended.addNickToList(serverNick);
+							}
+						}
+						filelist.add(fileExtended);
+					}
+				}
+				response.setExtendedFilelist(filelist);
+			} else {
+				System.out.println("key " + key + " not registered in directory");
+				response = new DirMessage(DirMessageOps.OPERATION_INVALIDKEY);
 			}
 			break;
 		}

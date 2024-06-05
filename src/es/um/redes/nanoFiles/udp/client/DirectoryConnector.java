@@ -7,11 +7,13 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketTimeoutException;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import es.um.redes.nanoFiles.udp.message.DirMessage;
 import es.um.redes.nanoFiles.udp.message.DirMessageOps;
 import es.um.redes.nanoFiles.util.FileInfo;
+import es.um.redes.nanoFiles.util.FileInfoExtended;
 
 /**
  * Cliente con métodos de consulta y actualización específicos del directorio
@@ -480,10 +482,32 @@ public class DirectoryConnector {
 	 */
 	public boolean publishLocalFiles(FileInfo[] files) {
 		boolean success = false;
-
-		// TODO: Ver TODOs en logIntoDirectory y seguir esquema similar
-
-
+		LinkedList<FileInfo> filesToPublish = new LinkedList<FileInfo>();
+		for (int i = 0; i < files.length; i++) {
+			filesToPublish.add(files[i]);
+		}
+		
+		DirMessage msgToSend = new DirMessage(DirMessageOps.OPERATION_PUBLISH);
+		msgToSend.setKey(sessionKey);
+		msgToSend.setFilelist(filesToPublish);
+		String strToSend = msgToSend.toString();
+		byte[] bytesToSend = strToSend.getBytes();
+		
+		System.out.print("Sending message\n" + strToSend);
+		
+		byte[] bytesReceived = sendAndReceiveDatagrams(bytesToSend);
+		String strReceived = new String(bytesReceived);
+		DirMessage msgReceived = DirMessage.fromString(strReceived);
+		
+		if (msgReceived.getOperation().equals(DirMessageOps.OPERATION_PUBLISHOK)) {
+			System.out.println("Files published");
+			success = true;
+		} else if (msgReceived.getOperation().equals(DirMessageOps.OPERATION_INVALIDKEY)) {
+			System.out.println("key " + msgToSend.getKey() + " not registered in directory");
+		} else {
+			System.err.println("ERROR: unexpected response from directory:");
+			System.out.print(strReceived);
+		}
 
 		return success;
 	}
@@ -497,12 +521,30 @@ public class DirectoryConnector {
 	 * @return Los ficheros publicados al directorio, o null si el directorio no
 	 *         pudo satisfacer nuestra solicitud
 	 */
-	public FileInfo[] getFileList() {
-		FileInfo[] filelist = null;
-		// TODO: Ver TODOs en logIntoDirectory y seguir esquema similar
-
-
-
+	public List<FileInfoExtended> getFileList() {
+		List<FileInfoExtended> filelist = null;
+		
+		DirMessage msgToSend = new DirMessage(DirMessageOps.OPERATION_GET_FILELIST);
+		msgToSend.setKey(sessionKey);
+		String strToSend = msgToSend.toString();
+		byte[] bytesToSend = strToSend.getBytes();
+		System.out.println("Sending request to directory:");
+		System.out.print(strToSend);
+		
+		byte[] bytesReceived = sendAndReceiveDatagrams(bytesToSend);
+		String strReceived = new String(bytesReceived);
+		DirMessage msgReceived = DirMessage.fromString(strReceived);
+		
+		if (msgReceived.getOperation().equals(DirMessageOps.OPERATION_SEND_FILELIST)) {
+			System.out.println("List received");
+			filelist = msgReceived.getExtendedFilelist();
+		} else if (msgReceived.getOperation().equals(DirMessageOps.OPERATION_INVALIDKEY)) {
+			System.out.println("key " + msgToSend.getKey() + " not registered in directory");
+		} else {
+			System.err.println("ERROR: unexpected response from directory:");
+			System.out.print(strReceived);
+		}
+		
 		return filelist;
 	}
 
@@ -515,10 +557,33 @@ public class DirectoryConnector {
 	 *         directorio el fichero indicado. Si no hay ningún servidor, devuelve
 	 *         una lista vacía.
 	 */
-	public String[] getServerNicknamesSharingThisFile(String fileHash) {
-		String[] nicklist = null;
-		// TODO: Ver TODOs en logIntoDirectory y seguir esquema similar
-
+	public List<String> getServerNicknamesSharingThisFile(String fileHash) {
+		List<String> nicklist = null;
+		
+		DirMessage msgToSend = new DirMessage(DirMessageOps.OPERATION_SEARCH);
+		msgToSend.setKey(sessionKey);
+		msgToSend.setHash(fileHash);
+		String strToSend = msgToSend.toString();
+		byte[] bytesToSend = strToSend.getBytes();
+		System.out.println("Sending request:");
+		System.out.print(strToSend);
+		
+		byte[] bytesReceived = sendAndReceiveDatagrams(bytesToSend);
+		String strReceived = new String(bytesReceived);
+		DirMessage msgReceived = DirMessage.fromString(strReceived);
+		
+		if (msgReceived.getOperation().equals(DirMessageOps.OPERATION_SEARCH_RESULTS)) {
+			nicklist = msgReceived.getServerList();
+			for (String nick : nicklist) {
+				System.out.println(nick);
+			}
+			
+		} else if (msgReceived.getOperation().equals(DirMessageOps.OPERATION_INVALIDKEY)) {
+			System.out.println("key " + msgToSend.getKey() + " not registered in directory");
+		} else {
+			System.err.println("ERROR: unexpected response from directory:");
+			System.out.print(strReceived);
+		}
 
 
 		return nicklist;
