@@ -14,6 +14,7 @@ public class PeerMessageOps {
 	public static final byte OPCODE_FILE_SENT_CONFIRMATION = 3;
 	public static final byte OPCODE_PARTIAL_FILE_REQUEST = 4;
 	public static final byte OPCODE_PARTIAL_FILE_SPECIFICATION = 5;
+	public static final byte OPCODE_PARTIAL_FILE_SENT = 6;
 	
 	public static final byte OPCODE_FILE_NOT_FOUND = 44;
 	public static final byte OPCODE_INVALID_POSITION = 45;

@@ -198,6 +198,9 @@ public class PeerMessage {
 			message.setParam1(p1);
 			message.setParam2(p2);
 			break;
+		case PeerMessageOps.OPCODE_PARTIAL_FILE_SENT:
+			message.setOpcode(opcode);
+			break;
 		case PeerMessageOps.OPCODE_FILE_NOT_FOUND:
 			message.setOpcode(opcode);
 			break;
@@ -244,6 +247,8 @@ public class PeerMessage {
 		case PeerMessageOps.OPCODE_PARTIAL_FILE_SPECIFICATION:
 			dos.writeLong(param1);
 			dos.writeLong(param2);
+			break;
+		case PeerMessageOps.OPCODE_PARTIAL_FILE_SENT:
 			break;
 		case PeerMessageOps.OPCODE_FILE_NOT_FOUND:
 			break;

@@ -143,7 +143,7 @@ public class NFControllerLogicP2P {
 	 */
 	public boolean downloadFileFromMultipleServers(LinkedList<InetSocketAddress> serverAddressList,
 			String targetFileHash, String localFileName) {
-		boolean downloaded = false;
+		boolean result = false;
 
 		if (serverAddressList == null) {
 			System.err.println("* Cannot start download - No list of server addresses provided");
@@ -159,11 +159,34 @@ public class NFControllerLogicP2P {
 		 */
 		try {
 			int nServers = serverAddressList.size();
-			NFConnector[] nfConnectors = new NFConnector[nServers];
+			InetSocketAddress[] serverAddressArray = new InetSocketAddress[nServers];
+			int i = 0;
+			for (InetSocketAddress serverAddress : serverAddressList) {
+				serverAddressArray[i] = serverAddress;
+				i++;
+			}
+			/*NFConnector[] nfConnectors = new NFConnector[nServers];
 			int i = 0;
 			for (InetSocketAddress serverAddress : serverAddressList) {
 				nfConnectors[i] = new NFConnector(serverAddress);
 				i++;
+			}
+			*/
+			File newFile = new File(localFileName);
+			if (newFile.createNewFile()) { // Si podemos crear el archivo porque no hay otro con el mismo nombre
+				System.out.println("File created: " + newFile.getAbsolutePath());
+				
+				boolean downloaded = false;
+				int maxChunkSize = 32768;
+				i = 0;
+				while (!downloaded) {
+					NFConnector nfConnector = new NFConnector(serverAddressArray[i%nServers]);
+					downloaded = nfConnector.downloadFileChunk(targetFileHash, newFile, i*maxChunkSize, (i+1)*maxChunkSize);
+					i++;
+				}
+				
+			} else {
+				System.out.println("File " + localFileName + "could not be created");
 			}
 			
 			
@@ -178,7 +201,7 @@ public class NFControllerLogicP2P {
 
 
 
-		return downloaded;
+		return result;
 	}
 
 	/**

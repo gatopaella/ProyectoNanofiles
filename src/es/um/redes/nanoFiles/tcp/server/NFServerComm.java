@@ -43,7 +43,7 @@ public class NFServerComm {
 				byte opcode = msgFromClient.getOpcode();
 				
 				switch(opcode) {
-				case PeerMessageOps.OPCODE_FILE_REQUEST:
+				case PeerMessageOps.OPCODE_FILE_REQUEST: {
 					String hashSubstr = new String(msgFromClient.getValor());
 					FileInfo files[] = NanoFiles.db.getFiles();
 					FileInfo matchingFiles[] = FileInfo.lookupHashSubstring(files, hashSubstr);
@@ -102,6 +102,70 @@ public class NFServerComm {
 						*/
 					}
 					break;
+				}
+				case PeerMessageOps.OPCODE_PARTIAL_FILE_REQUEST: {
+					String hashSubstr = new String(msgFromClient.getValor());
+					FileInfo files[] = NanoFiles.db.getFiles();
+					FileInfo matchingFiles[] = FileInfo.lookupHashSubstring(files, hashSubstr);
+					
+					if(matchingFiles.length == 0) {
+						System.out.println("No file matches the hash substring " + hashSubstr);
+						PeerMessage responseToClient = new PeerMessage(PeerMessageOps.OPCODE_FILE_NOT_FOUND);
+						responseToClient.writeMessageToOutputStream(dos);
+					} else if (matchingFiles.length >= 2) {
+						//TODO gestionar esto bien, quizás con una respuesta de control sobre ambiguedad
+						
+					} else {
+						String completeHash = matchingFiles[0].fileHash;
+						long sizeToRead = matchingFiles[0].fileSize;
+						String path = matchingFiles[0].filePath;
+						System.out.println("File found: " + path);
+						File fileToSend = new File(path);
+						
+						RandomAccessFile randAccess = new RandomAccessFile(fileToSend, "r");
+						
+						PeerMessage specificationMsg = PeerMessage.readMessageFromInputStream(dis);
+						
+						if (specificationMsg.getOpcode() == PeerMessageOps.OPCODE_PARTIAL_FILE_SPECIFICATION) {
+							long posInFile = specificationMsg.getParam1();
+							randAccess.seek(posInFile);
+							// Aquí nos estamos quedando con min{tamaño fichero, fin del fragmento a leer}
+							if (specificationMsg.getParam2() < sizeToRead) sizeToRead = specificationMsg.getParam2();
+							while(posInFile < sizeToRead) {
+								int sentSize = (int) Math.min(MAX_SENT_SIZE, sizeToRead-posInFile);
+								byte fileData[] = new byte[sentSize];
+								randAccess.read(fileData);
+								posInFile += sentSize;
+								PeerMessage responseToClient = new PeerMessage(PeerMessageOps.OPCODE_SEND_FILE,
+																				sentSize, fileData);
+								responseToClient.writeMessageToOutputStream(dos);
+							}
+							
+							PeerMessage confirmation;
+							
+							if (randAccess.getFilePointer() == matchingFiles[0].fileSize) {
+								confirmation = new PeerMessage(PeerMessageOps.OPCODE_FILE_SENT_CONFIRMATION,
+										(int) completeHash.length(),
+										completeHash.getBytes());
+							}
+							else confirmation = new PeerMessage(PeerMessageOps.OPCODE_PARTIAL_FILE_SENT);
+							
+							
+							
+							randAccess.close();
+							confirmation.writeMessageToOutputStream(dos);
+							
+							isSendingFiles = false;
+							
+						} else {
+							System.err.println("Unexpected message as partial download specification: ");
+							System.err.println("Code: " + specificationMsg.getOpcode());
+							PeerMessage responseToClient = new PeerMessage(PeerMessageOps.OPCODE_FILE_NOT_SPECIFIED);
+							responseToClient.writeMessageToOutputStream(dos);
+						}
+					}
+					break;
+				}
 				default:
 					System.err.println("ERROR: No treatment for the received message");
 				}

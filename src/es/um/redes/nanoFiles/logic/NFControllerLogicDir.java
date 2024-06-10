@@ -286,8 +286,14 @@ public class NFControllerLogicDir {
 		 * 
 		 */
 
-
-
+		List<String> serverNicks = directoryConnector.getServerNicknamesSharingThisFile(downloadTargetFileHash);
+		if (serverNicks != null) {
+			serverAddressList = new LinkedList<InetSocketAddress>();
+			for (String serverNick : serverNicks) {
+				serverAddressList.add(getServerAddress(serverNick));
+			}
+		}
+	
 
 		return serverAddressList;
 	}
