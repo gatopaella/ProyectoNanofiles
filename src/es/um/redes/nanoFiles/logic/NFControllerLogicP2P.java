@@ -157,6 +157,19 @@ public class NFControllerLogicP2P {
 		 * informa y no se realiza la descarga. Si todo va bien, imprimir mensaje
 		 * informando de que se ha completado la descarga.
 		 */
+		try {
+			int nServers = serverAddressList.size();
+			NFConnector[] nfConnectors = new NFConnector[nServers];
+			int i = 0;
+			for (InetSocketAddress serverAddress : serverAddressList) {
+				nfConnectors[i] = new NFConnector(serverAddress);
+				i++;
+			}
+			
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		/*
 		 * TODO: Las excepciones que puedan lanzarse deben ser capturadas y tratadas en
 		 * este método. Si se produce una excepción de entrada/salida (error del que no

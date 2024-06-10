@@ -177,6 +177,58 @@ public class NFConnector {
 
 		return downloaded;
 	}
+	
+	public boolean downloadFileChunk(String targetFileHashSubstr, File file, long firstPos, long endPos) {
+		boolean downloaded = false;
+		
+		byte opcode = PeerMessageOps.OPCODE_PARTIAL_FILE_REQUEST;
+		int hashLength = targetFileHashSubstr.length();
+		/*
+		byte opcode = PeerMessageOps.OPCODE_FILE_REQUEST;
+		int hashLength = targetFileHashSubstr.length();
+		byte[] hash = targetFileHashSubstr.getBytes();
+		PeerMessage request = new PeerMessage(opcode, hashLength, hash);
+		request.writeMessageToOutputStream(dos);
+		
+		
+		boolean receivingFile = true;
+		FileOutputStream fos = new FileOutputStream(file); // Abrimos el fichero
+		while(receivingFile) {
+			PeerMessage response = PeerMessage.readMessageFromInputStream(dis);
+			opcode = response.getOpcode();
+			switch(opcode) {
+			case PeerMessageOps.OPCODE_FILE_NOT_FOUND:
+				System.out.println("El hash " + targetFileHashSubstr + " no se corresponde con ningún archivo");
+				receivingFile = false;
+				break;
+			case PeerMessageOps.OPCODE_SEND_FILE:
+				System.out.println("Datos recibidos");
+				System.out.println("Escribiendo contenido en el fichero " + file.getName() + "...");
+				fos.write(response.getValor());
+				break;
+			case PeerMessageOps.OPCODE_FILE_SENT_CONFIRMATION:
+				System.out.println("Descarga completada");
+				System.out.println("El trozo de hash del fichero solicitado: " + targetFileHashSubstr);
+				System.out.println("El hash completo según la confirmación: " 
+						+ new String(response.getValor()));
+				String receivedHash = FileDigest.computeFileChecksumString(file.getName());
+				System.out.println("El hash correspondiente al fichero recibido: "
+						+ receivedHash);
+				downloaded = true;
+				receivingFile = false;
+				break;
+			default:
+				System.err.println("Unexpected response from server\nopcode: " + opcode);
+				receivingFile = false;
+				break;
+			}
+				
+		}
+		fos.close(); // Cerramos el fichero
+		*/
+		
+		return downloaded;
+	}
 
 
 

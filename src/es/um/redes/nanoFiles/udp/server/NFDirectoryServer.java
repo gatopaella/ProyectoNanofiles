@@ -421,28 +421,44 @@ public class NFDirectoryServer {
 		}
 		case DirMessageOps.OPERATION_SEARCH: {
 			int key = msg.getKey();
-			String fileHash = msg.getHash();
+			String fileHashSubstr = msg.getHash();
 			LinkedList<String> serverList = new LinkedList<>();
-			if (sessionKeys.containsKey(key) && serversByHash.containsKey(fileHash)) {
-				response = new DirMessage(DirMessageOps.OPERATION_SEARCH_RESULTS);
-				for (String srver : serversByHash.get(fileHash)) { // Añade solo los que son servidores
-					if(servers.containsKey(nicks.get(srver))) {
-						serverList.add(srver);
+			
+			if (sessionKeys.containsKey(key)) {
+				String fileHash = "invalidHash";
+				int nHashMatches = 0;
+				for (String hash : serversByHash.keySet()) {
+					if (hash.contains(fileHashSubstr)) {
+						fileHash = hash;
+						nHashMatches++;
 					}
 				}
-				response.setServerList(serverList);
-				System.out.println("Servidores encontrados : " + serverList);
+				if (nHashMatches == 0) {
+					System.out.println("there are no servers providing the file identified by hash " + fileHashSubstr);
+					System.out.println("returning empty list");
+					response = new DirMessage(DirMessageOps.OPERATION_SEARCH_RESULTS);
+					response.setServerList(new LinkedList<String>());
+				} else if (nHashMatches == 1) { // Entonces fileHash será esa única coincidencia
+					response = new DirMessage(DirMessageOps.OPERATION_SEARCH_RESULTS); 
+					for (String srver : serversByHash.get(fileHash)) { // Añade solo los que son servidores
+						if(servers.containsKey(nicks.get(srver))) {
+							serverList.add(srver);
+						}
+					}
+					response.setServerList(serverList);
+					System.out.println("Servidores encontrados : " + serverList);
+				} else { // Substring de hash ambigua
+					System.out.println("more than one file cointains the hash substr: " + fileHashSubstr);
+					System.out.println("returning empty list");
+					response = new DirMessage(DirMessageOps.OPERATION_SEARCH_RESULTS);
+					response.setServerList(new LinkedList<String>());
+				}
 			}
-			if (serverList.size() == 0) {
-				System.out.println("there are no servers providing the file identified by hash " + fileHash);
-				System.out.println("returning empty list");
-				response = new DirMessage(DirMessageOps.OPERATION_SEARCH_RESULTS);
-				response.setServerList(new LinkedList<String>());
-			}
-			if (!sessionKeys.containsKey(key)) {
+			else {
 				System.out.println("key " + key + " not registered in directory");
 				response = new DirMessage(DirMessageOps.OPERATION_INVALIDKEY);
 			}
+			
 			
 			break;
 		}
