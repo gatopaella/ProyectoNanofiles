@@ -19,6 +19,7 @@ public class PeerMessageOps {
 	public static final byte OPCODE_FILE_NOT_FOUND = 44;
 	public static final byte OPCODE_INVALID_POSITION = 45;
 	public static final byte OPCODE_FILE_NOT_SPECIFIED = 46;
+	public static final byte OPCODE_AMBIGUOUS_HASH = 47;
 
 
 	/**
@@ -35,7 +36,8 @@ public class PeerMessageOps {
 			OPCODE_PARTIAL_FILE_SPECIFICATION,
 			OPCODE_FILE_NOT_FOUND,
 			OPCODE_INVALID_POSITION,
-			OPCODE_FILE_NOT_SPECIFIED
+			OPCODE_FILE_NOT_SPECIFIED,
+			OPCODE_AMBIGUOUS_HASH
 			};
 	private static final String[] _valid_operations_str = {
 			"INVALID_OPCODE",
@@ -46,7 +48,8 @@ public class PeerMessageOps {
 			"PARTIAL_FILE_SPECIFICATION",
 			"FILE_NOT_FOUND",
 			"INVALID_POSITION",
-			"FILE_NOT_SPECIFIED"
+			"FILE_NOT_SPECIFIED",
+			"OPCODE_AMBIGUOUS_HASH"
 			};
 
 	private static Map<String, Byte> _operation_to_opcode;

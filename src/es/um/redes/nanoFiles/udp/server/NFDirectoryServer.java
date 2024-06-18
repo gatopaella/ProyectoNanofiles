@@ -371,24 +371,30 @@ public class NFDirectoryServer {
 		case DirMessageOps.OPERATION_GET_SERVER_ADDRESS: {
 			int key = msg.getKey();
 			String nick = msg.getNickname();
-			int serverKey = nicks.get(nick);
-			if (sessionKeys.containsKey(key) && servers.containsKey(serverKey)) {
-				InetSocketAddress serverAddr = servers.get(serverKey);
-				String serverIpAddr = serverAddr.getAddress().toString();
-				int serverPort = serverAddr.getPort();
-				
-				response = new DirMessage(DirMessageOps.OPERATION_SEND_SERVER_ADDRESS);
-				response.setIpAddress(serverIpAddr);
-				response.setPort(serverPort);
-				System.out.println("Enviando dirección del servidor " + nick + "...");
-				
-			} else if (servers.containsKey(nick)) { // Es decir, si lo que falla es la clave
-				response = new DirMessage(DirMessageOps.OPERATION_INVALIDKEY);
-				System.out.println("La clave " + key + " no está registrada, melón");
-			} else { // Si lo que falla es que el peer no es servidor
+			if (nicks.containsKey(nick)) {
+				int serverKey = nicks.get(nick);
+				if (sessionKeys.containsKey(key) && servers.containsKey(serverKey)) {
+					InetSocketAddress serverAddr = servers.get(serverKey);
+					String serverIpAddr = serverAddr.getAddress().toString();
+					int serverPort = serverAddr.getPort();
+					
+					response = new DirMessage(DirMessageOps.OPERATION_SEND_SERVER_ADDRESS);
+					response.setIpAddress(serverIpAddr);
+					response.setPort(serverPort);
+					System.out.println("Enviando dirección del servidor " + nick + "...");
+					
+				} else if (servers.containsKey(nick)) { // Es decir, si lo que falla es la clave
+					response = new DirMessage(DirMessageOps.OPERATION_INVALIDKEY);
+					System.out.println("La clave " + key + " no está registrada, melón");
+				} else { // Si lo que falla es que el peer no es servidor
+					response = new DirMessage(DirMessageOps.OPERATION_INVALIDNICKNAME);
+					System.out.println("El peer " + nick + " no es un servidor");
+				}
+			} else {
 				response = new DirMessage(DirMessageOps.OPERATION_INVALIDNICKNAME);
-				System.out.println("El peer " + nick + " no está logueado o no es un servidor");
+				System.out.println("El peer " + nick + " no está logueado");
 			}
+			
 			break;
 		}
 		case DirMessageOps.OPERATION_PUBLISH: {

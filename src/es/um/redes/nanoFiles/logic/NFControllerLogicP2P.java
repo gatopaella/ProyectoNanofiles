@@ -159,6 +159,11 @@ public class NFControllerLogicP2P {
 		 */
 		try {
 			int nServers = serverAddressList.size();
+			
+			if (nServers == 0) {
+				System.out.println("There are no servers sharing this file");
+				return false;
+			}
 			InetSocketAddress[] serverAddressArray = new InetSocketAddress[nServers];
 			int i = 0;
 			for (InetSocketAddress serverAddress : serverAddressList) {
@@ -186,7 +191,7 @@ public class NFControllerLogicP2P {
 				}
 				
 			} else {
-				System.out.println("File " + localFileName + "could not be created");
+				System.out.println("File " + localFileName + " could not be created");
 			}
 			
 			

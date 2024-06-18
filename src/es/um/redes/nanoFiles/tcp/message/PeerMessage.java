@@ -210,6 +210,9 @@ public class PeerMessage {
 		case PeerMessageOps.OPCODE_INVALID_POSITION:
 			message.setOpcode(opcode);
 			break;
+		case PeerMessageOps.OPCODE_AMBIGUOUS_HASH:
+			message.setOpcode(opcode);
+			break;
 		default:
 			System.err.println("PeerMessage.readMessageFromInputStream doesn't know how to parse this message opcode: "
 					+ PeerMessageOps.opcodeToOperation(opcode));
@@ -255,6 +258,8 @@ public class PeerMessage {
 		case PeerMessageOps.OPCODE_FILE_NOT_SPECIFIED:
 			break;
 		case PeerMessageOps.OPCODE_INVALID_POSITION:
+			break;
+		case PeerMessageOps.OPCODE_AMBIGUOUS_HASH:
 			break;
 		default:
 			System.err.println("PeerMessage.writeMessageToOutputStream found unexpected message opcode " + opcode + "("

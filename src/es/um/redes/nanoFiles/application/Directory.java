@@ -6,7 +6,7 @@ import java.net.SocketException;
 import es.um.redes.nanoFiles.udp.server.NFDirectoryServer;
 
 public class Directory {
-	public static final double DEFAULT_CORRUPTION_PROBABILITY = 0.0;
+	public static final double DEFAULT_CORRUPTION_PROBABILITY = 0.2;
 
 	public static void main(String[] args) {
 		double datagramCorruptionProbability = DEFAULT_CORRUPTION_PROBABILITY;

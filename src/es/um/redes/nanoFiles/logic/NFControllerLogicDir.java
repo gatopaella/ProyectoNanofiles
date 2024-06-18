@@ -224,12 +224,17 @@ public class NFControllerLogicDir {
 			try {
 				ip = InetAddress.getByName(socketStr[0]);
 			} catch (UnknownHostException e) {
-				e.printStackTrace();
-				throw new IllegalArgumentException("socket address " + serverNicknameOrSocketAddr 
-						+ " was not valid");
+				//e.printStackTrace();
+				System.err.println("Socket address " + serverNicknameOrSocketAddr + " was not valid");
 			}
-			int port = Integer.parseInt(socketStr[1]);
-			fserverAddr = new InetSocketAddress(ip, port);
+			int port = -1;
+			try {
+				port = Integer.parseInt(socketStr[1]);
+			} catch (NumberFormatException e) {
+				System.err.println("Port " + socketStr[1] + " was not valid");
+			}
+			if (port != -1 && ip != null) fserverAddr = new InetSocketAddress(ip, port);
+			else fserverAddr = null;
 
 		} else {
 			/*

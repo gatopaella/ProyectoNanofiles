@@ -47,14 +47,16 @@ public class NFServerComm {
 					String hashSubstr = new String(msgFromClient.getValor());
 					FileInfo files[] = NanoFiles.db.getFiles();
 					FileInfo matchingFiles[] = FileInfo.lookupHashSubstring(files, hashSubstr);
+					PeerMessage responseToClient = null;
 					
 					if(matchingFiles.length == 0) {
 						System.out.println("No file matches the hash substring " + hashSubstr);
-						PeerMessage responseToClient = new PeerMessage(PeerMessageOps.OPCODE_FILE_NOT_FOUND);
+						responseToClient = new PeerMessage(PeerMessageOps.OPCODE_FILE_NOT_FOUND);
 						responseToClient.writeMessageToOutputStream(dos);
 					} else if (matchingFiles.length >= 2) {
-						//TODO gestionar esto bien, quizás con una respuesta de control sobre ambiguedad
-						
+						System.out.println("The hash substring is ambiguous");
+						responseToClient = new PeerMessage(PeerMessageOps.OPCODE_AMBIGUOUS_HASH);
+						responseToClient.writeMessageToOutputStream(dos);
 					} else {
 						String completeHash = matchingFiles[0].fileHash;
 						long fileSize = matchingFiles[0].fileSize;
@@ -69,7 +71,7 @@ public class NFServerComm {
 							byte fileData[] = new byte[sentSize];
 							fis.read(fileData);
 							posInFile += sentSize;
-							PeerMessage responseToClient = new PeerMessage(PeerMessageOps.OPCODE_SEND_FILE,
+							responseToClient = new PeerMessage(PeerMessageOps.OPCODE_SEND_FILE,
 																			sentSize, fileData);
 							responseToClient.writeMessageToOutputStream(dos);
 						}
@@ -107,14 +109,16 @@ public class NFServerComm {
 					String hashSubstr = new String(msgFromClient.getValor());
 					FileInfo files[] = NanoFiles.db.getFiles();
 					FileInfo matchingFiles[] = FileInfo.lookupHashSubstring(files, hashSubstr);
+					PeerMessage responseToClient = null;
 					
 					if(matchingFiles.length == 0) {
 						System.out.println("No file matches the hash substring " + hashSubstr);
-						PeerMessage responseToClient = new PeerMessage(PeerMessageOps.OPCODE_FILE_NOT_FOUND);
+						responseToClient = new PeerMessage(PeerMessageOps.OPCODE_FILE_NOT_FOUND);
 						responseToClient.writeMessageToOutputStream(dos);
 					} else if (matchingFiles.length >= 2) {
-						//TODO gestionar esto bien, quizás con una respuesta de control sobre ambiguedad
-						
+						System.out.println("The hash substring is ambiguous");
+						responseToClient = new PeerMessage(PeerMessageOps.OPCODE_AMBIGUOUS_HASH);
+						responseToClient.writeMessageToOutputStream(dos);
 					} else {
 						String completeHash = matchingFiles[0].fileHash;
 						long sizeToRead = matchingFiles[0].fileSize;
@@ -136,7 +140,7 @@ public class NFServerComm {
 								byte fileData[] = new byte[sentSize];
 								randAccess.read(fileData);
 								posInFile += sentSize;
-								PeerMessage responseToClient = new PeerMessage(PeerMessageOps.OPCODE_SEND_FILE,
+								responseToClient = new PeerMessage(PeerMessageOps.OPCODE_SEND_FILE,
 																				sentSize, fileData);
 								responseToClient.writeMessageToOutputStream(dos);
 							}
@@ -160,7 +164,7 @@ public class NFServerComm {
 						} else {
 							System.err.println("Unexpected message as partial download specification: ");
 							System.err.println("Code: " + specificationMsg.getOpcode());
-							PeerMessage responseToClient = new PeerMessage(PeerMessageOps.OPCODE_FILE_NOT_SPECIFIED);
+							responseToClient = new PeerMessage(PeerMessageOps.OPCODE_FILE_NOT_SPECIFIED);
 							responseToClient.writeMessageToOutputStream(dos);
 						}
 					}

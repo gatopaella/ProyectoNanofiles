@@ -179,7 +179,7 @@ public class NFConnector {
 	}
 	
 	public boolean downloadFileChunk(String targetFileHashSubstr, File file, long firstPos, long endPos) throws IOException {
-		boolean downloaded = false;
+		boolean downloadFinished = false;
 		
 		byte opcode = PeerMessageOps.OPCODE_PARTIAL_FILE_REQUEST;
 		int hashLength = targetFileHashSubstr.length();
@@ -204,7 +204,7 @@ public class NFConnector {
 				break;
 			case PeerMessageOps.OPCODE_SEND_FILE:
 				System.out.println("Datos recibidos: bytes " + partialFile.getFilePointer() + "-" 
-									+ (response.getLongitud()-1));
+									+ (firstPos + response.getLongitud()-1));
 				System.out.println("Escribiendo contenido en el fichero " + file.getName() + "...");
 				partialFile.write(response.getValor());
 				break;
@@ -216,7 +216,12 @@ public class NFConnector {
 				System.out.println("Descarga completada");
 				System.out.println("Se han descargado " + (partialFile.getFilePointer() - firstPos) + " bytes");
 				receivingFile = false;
-				downloaded = true;
+				downloadFinished = true;
+				break;
+			case PeerMessageOps.OPCODE_AMBIGUOUS_HASH:
+				System.out.println("La subcadena de hash coincide con varios ficheros");
+				receivingFile = false;
+				downloadFinished = true;
 				break;
 			default:
 				System.err.println("Unexpected response from server\nopcode: " + opcode);
@@ -226,7 +231,7 @@ public class NFConnector {
 		}
 		partialFile.close();
 		
-		return downloaded;
+		return downloadFinished;
 	}
 
 

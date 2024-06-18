@@ -119,6 +119,14 @@ public class DirectoryConnector {
 				System.err.println("SocketTimeoutException receiving packetFromServer");
 				attempts++;
 				if (attempts < MAX_NUMBER_OF_ATTEMPTS - 1) System.err.println("Trying again...");
+				
+				try { // Esto lo quito si Fernando me lo ordena
+					socket.send(packetToServer);
+				} catch (IOException ioException) {
+					System.err.println("IOException sending packetToServer");
+					System.exit(-1);
+				}
+				
 			} catch (IOException ioException) {
 				System.err.println("IOException receiving packetFromServer");
 				System.exit(-1);
@@ -463,7 +471,7 @@ public class DirectoryConnector {
 			System.out.println("Returning value null...");
 		} else if (operation.equals(DirMessageOps.OPERATION_INVALIDNICKNAME)) {
 			System.out.println("Error during server address request:");
-			System.out.println("peer " + nick + " is not serving files");
+			System.out.println(nick + " is not a server");
 			System.out.println("Returning value null...");
 		} else {
 			System.err.println("Error during server address request: unexpected response from directory");

@@ -273,12 +273,18 @@ public class NFController {
 			}
 			break;
 		}
-		case NFCommands.COM_PUBLISH:
+		case NFCommands.COM_PUBLISH: {
 			if (currentState != LOGGED_AS_SERVER) {
 				commandAllowed = false;
 				System.out.println("Only servers can publish");
 			}
 			break;
+		}
+		case NFCommands.COM_FILELIST: {
+			if (currentState == LOGGED_OUT) {
+				System.err.println("* Invalid command: you are not logged in the directory");
+			}
+		}
 		default:
 			System.err.println("ERROR: undefined behaviour for " + currentCommand + " command!");
 		}
