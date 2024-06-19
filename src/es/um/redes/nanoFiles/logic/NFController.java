@@ -118,6 +118,10 @@ public class NFController {
 			 * Pedir al controllerDir que "cierre sesión" en el directorio para dar de baja
 			 * el nombre de usuario registrado (método doLogout).
 			 */
+			if (currentState == LOGGED_AS_SERVER) {
+				controllerPeer.stopBackgroundFileServer();
+				controllerDir.unregisterFileServer();
+			}
 			commandSucceeded = controllerDir.doLogout();
 			break;
 		case NFCommands.COM_USERLIST:
@@ -140,7 +144,7 @@ public class NFController {
 			 * Pedir al controllerPeer que lance un servidor de ficheros en primer plano
 			 * (método foregroundServeFiles). Este método no retorna...
 			 */
-			controllerPeer.foregroundServeFiles();
+			controllerPeer.foregroundServeFiles(controllerDir);
 			break;
 		case NFCommands.COM_PUBLISH:
 			/*
@@ -211,6 +215,17 @@ public class NFController {
 					downloadLocalFileName);
 			break;
 		case NFCommands.COM_QUIT:
+			if (currentState == LOGGED_AS_SERVER) {
+				controllerPeer.stopBackgroundFileServer();
+				controllerDir.unregisterFileServer();
+			}
+			if (currentState == LOGGED_AS_SERVER || currentState == LOGGED_IN) {
+				controllerDir.doLogout();
+			}
+			
+			System.out.println("Bye!");
+			System.exit(0);
+			break;
 		default:
 		}
 
@@ -282,8 +297,34 @@ public class NFController {
 		}
 		case NFCommands.COM_FILELIST: {
 			if (currentState == LOGGED_OUT) {
+				commandAllowed = false;
 				System.err.println("* Invalid command: you are not logged in the directory");
 			}
+			break;
+		}
+		case NFCommands.COM_DOWNLOADFROM: {
+			if (currentState == LOGGED_OUT) {
+				commandAllowed = false;
+				System.err.println("Invalid command: you are not logged in the directory");
+			}
+			break;
+		}
+		case NFCommands.COM_SEARCH: {
+			if (currentState == LOGGED_OUT) {
+				commandAllowed = false;
+				System.err.println("Invalid command: you are not logged in the directory");
+			}
+			break;
+		}
+		case NFCommands.COM_DOWNLOAD: {
+			if (currentState == LOGGED_OUT) {
+				commandAllowed = false;
+				System.err.println("Invalid command: you are not logged in the directory");
+			}
+			break;
+		}
+		case NFCommands.COM_QUIT: {
+			break;
 		}
 		default:
 			System.err.println("ERROR: undefined behaviour for " + currentCommand + " command!");

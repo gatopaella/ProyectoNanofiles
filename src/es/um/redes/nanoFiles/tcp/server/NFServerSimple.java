@@ -35,6 +35,10 @@ public class NFServerSimple {
 		}
 		if (port >= DEF_PORT + MAX_LOCAL_SERVERS) throw new IOException();
 	}
+	
+	public int getPort() {
+		return port;
+	}
 
 	/**
 	 * Método para ejecutar el servidor de ficheros en primer plano. Sólo es capaz
