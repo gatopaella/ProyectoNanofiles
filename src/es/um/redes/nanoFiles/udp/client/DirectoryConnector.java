@@ -371,25 +371,24 @@ public class DirectoryConnector {
 	 *         servidor.
 	 */
 	public boolean registerServerPort(int serverPort) {
-		// TODO: Ver TODOs en logIntoDirectory y seguir esquema similar
 		boolean success = false;
 
-		DirMessage messageToSend = new DirMessage(DirMessageOps.OPERATION_REGISTER_SERVER_PORT);
+		DirMessage messageToSend = new DirMessage(DirMessageOps.OPERATION_REGISTER_SERVER_ADDRESS);
 		messageToSend.setKey(sessionKey);
 		messageToSend.setPort(serverPort);
 		String strToSend = messageToSend.toString();
 		byte[] bytesToSend = strToSend.getBytes();
-		System.out.print("El mensaje para registrar el puerto es:\n" + strToSend);
+		//System.out.print("El mensaje para registrar el puerto es:\n" + strToSend);
 		
 		byte[] bytesReceived = sendAndReceiveDatagrams(bytesToSend);
 		String strReceived = new String(bytesReceived);
 		DirMessage messageReceived = DirMessage.fromString(strReceived);
 		String operation = messageReceived.getOperation();
-		System.out.println("Campo operation = " + operation);
+		//System.out.println("Campo operation = " + operation);
 		
-		if(operation.equals(DirMessageOps.OPERATION_PORTOK)) {
+		if(operation.equals(DirMessageOps.OPERATION_ADDRESSOK)) {
 			success = true;
-			System.out.println("Puerto registrado correctamente");
+			System.out.println("Address registered in directory");
 		} else if (operation.equals(DirMessageOps.OPERATION_INVALIDPORT)) {
 			System.out.println("ERRPR: port " + messageToSend.getPort() + " not valid");
 		} else if (operation.equals(DirMessageOps.OPERATION_INVALIDKEY)) {
@@ -405,7 +404,7 @@ public class DirectoryConnector {
 	public boolean UnregisterServerPort() {
 		boolean success = false;
 		
-		DirMessage msgToSend = new DirMessage(DirMessageOps.OPERATION_REMOVE_SERVER_PORT);
+		DirMessage msgToSend = new DirMessage(DirMessageOps.OPERATION_REMOVE_SERVER_ADDRESS);
 		msgToSend.setKey(sessionKey);
 		String strToSend = msgToSend.toString();
 		byte[] bytesToSend = strToSend.getBytes();
@@ -415,7 +414,7 @@ public class DirectoryConnector {
 		DirMessage msgReceived = DirMessage.fromString(strReceived);
 		
 		String operation = msgReceived.getOperation();
-		if (operation.equals(DirMessageOps.OPERATION_REMOVE_PORT_OK)) {
+		if (operation.equals(DirMessageOps.OPERATION_REMOVE_ADDRESS_OK)) {
 			System.out.println("Server stopped");
 			success = true;
 		} else if (operation.equals(DirMessageOps.OPERATION_INVALIDKEY)) {
@@ -438,7 +437,6 @@ public class DirectoryConnector {
 	 */
 	public InetSocketAddress lookupServerAddrByUsername(String nick) {
 		InetSocketAddress serverAddr = null;
-		// TODO: Ver TODOs en logIntoDirectory y seguir esquema similar
 
 		DirMessage messageToSend = new DirMessage(DirMessageOps.OPERATION_GET_SERVER_ADDRESS);
 		messageToSend.setKey(sessionKey);
@@ -446,14 +444,14 @@ public class DirectoryConnector {
 		String strToSend = messageToSend.toString();
 		byte[] bytesToSend = strToSend.getBytes();
 		
-		System.out.print("La solicitud de dirección es: " + strToSend);
+		//System.out.print("La solicitud de dirección es: " + strToSend);
 		
 		byte[] bytesReceived = sendAndReceiveDatagrams(bytesToSend);
 		String strReceived = new String(bytesReceived);
 		DirMessage messageReceived = DirMessage.fromString(strReceived);
 		
 		String operation = messageReceived.getOperation();
-		System.out.print("Mensaje recibido: " + strReceived);
+		//System.out.print("Mensaje recibido: " + strReceived);
 		
 		if(operation.equals(DirMessageOps.OPERATION_SEND_SERVER_ADDRESS)) {
 			try {

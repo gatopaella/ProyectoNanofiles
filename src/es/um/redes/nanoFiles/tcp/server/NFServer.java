@@ -18,11 +18,8 @@ public class NFServer implements Runnable {
 	private static final int PORT = 10000;
 
 	public NFServer() throws IOException {
-		/*
-		 * TODO: Crear un socket servidor y ligarlo a cualquier puerto disponible
-		 */
 		serverSocket = new ServerSocket();
-		serverSocket.bind(null); // creo que esto es ligarlo a un puerto disponible cualquiera
+		serverSocket.bind(null);
 	}
 
 	public int getPort() {

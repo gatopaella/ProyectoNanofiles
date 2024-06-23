@@ -320,23 +320,23 @@ public class NFDirectoryServer {
 			
 			break;
 		}
-		case DirMessageOps.OPERATION_REGISTER_SERVER_PORT: {
+		case DirMessageOps.OPERATION_REGISTER_SERVER_ADDRESS: {
 			int key = msg.getKey();
 			int serverPort = msg.getPort();
 			if (sessionKeys.containsKey(key) && serverPort > 0) {
 				InetSocketAddress serverAddr = new InetSocketAddress(clientAddr.getAddress(), serverPort);
 				servers.put(key, serverAddr);
-				response = new DirMessage(DirMessageOps.OPERATION_PORTOK);
+				response = new DirMessage(DirMessageOps.OPERATION_ADDRESSOK);
 			} else if (serverPort > 0) {
 				response = new DirMessage(DirMessageOps.OPERATION_INVALIDKEY);
-				System.out.println("La clave " + key + " no está registrada, melón");
+				System.out.println("La clave " + key + " no está registrada");
 			} else {
 				response = new DirMessage(DirMessageOps.OPERATION_INVALIDPORT);
-				System.out.println("NANI... IMPOSIBLE... no he visto un puerto negativo desde la Era Heian");
+				System.out.println("El puerto " + serverPort + " no es válido");
 			}
 			break;
 		}
-		case DirMessageOps.OPERATION_REMOVE_SERVER_PORT: {
+		case DirMessageOps.OPERATION_REMOVE_SERVER_ADDRESS: {
 			int key = msg.getKey();
 			String serverNick = sessionKeys.get(key);
 			if (sessionKeys.containsKey(key)) {
@@ -359,7 +359,7 @@ public class NFDirectoryServer {
 				}
 				*/
 				
-				response = new DirMessage(DirMessageOps.OPERATION_REMOVE_PORT_OK);
+				response = new DirMessage(DirMessageOps.OPERATION_REMOVE_ADDRESS_OK);
 				System.out.println("Enviando confirmación de stopserver");
 			} else {
 				response = new DirMessage(DirMessageOps.OPERATION_INVALIDKEY);
@@ -381,7 +381,7 @@ public class NFDirectoryServer {
 					response = new DirMessage(DirMessageOps.OPERATION_SEND_SERVER_ADDRESS);
 					response.setIpAddress(serverIpAddr);
 					response.setPort(serverPort);
-					System.out.println("Enviando dirección del servidor " + nick + "...");
+					System.out.println("Sending address of " + nick + "...");
 					
 				} else if (servers.containsKey(nick)) { // Es decir, si lo que falla es la clave
 					response = new DirMessage(DirMessageOps.OPERATION_INVALIDKEY);

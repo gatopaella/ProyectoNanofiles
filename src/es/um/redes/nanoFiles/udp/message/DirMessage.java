@@ -319,7 +319,7 @@ public class DirMessage {
 			}
 			break;
 		}
-		case DirMessageOps.OPERATION_REGISTER_SERVER_PORT: {
+		case DirMessageOps.OPERATION_REGISTER_SERVER_ADDRESS: {
 			sb.append(FIELDNAME_KEY + DELIMITER + key + END_LINE);
 			sb.append(FIELDNAME_PORT + DELIMITER + port + END_LINE);
 			break;
@@ -334,14 +334,14 @@ public class DirMessage {
 			sb.append(FIELDNAME_PORT + DELIMITER + port + END_LINE);
 			break;
 		}
-		case DirMessageOps.OPERATION_PORTOK: {
+		case DirMessageOps.OPERATION_ADDRESSOK: {
 			break;
 		}
-		case DirMessageOps.OPERATION_REMOVE_SERVER_PORT: {
+		case DirMessageOps.OPERATION_REMOVE_SERVER_ADDRESS: {
 			sb.append(FIELDNAME_KEY + DELIMITER + key + END_LINE);
 			break;
 		}
-		case DirMessageOps.OPERATION_REMOVE_PORT_OK: {
+		case DirMessageOps.OPERATION_REMOVE_ADDRESS_OK: {
 			break;
 		}
 		case DirMessageOps.OPERATION_PUBLISH: {

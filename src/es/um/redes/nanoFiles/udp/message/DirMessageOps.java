@@ -13,10 +13,10 @@ public class DirMessageOps {
 	public static final String OPERATION_LOGOUTOK = "logoutOK";
 	public static final String OPERATION_GETUSERLIST = "getUserlist";
 	public static final String OPERATION_SENDUSERLIST = "sendUserlist";
-	public static final String OPERATION_REGISTER_SERVER_PORT = "registerServerPort";
-	public static final String OPERATION_PORTOK = "portOK";
-	public static final String OPERATION_REMOVE_SERVER_PORT = "removeServerPort";
-	public static final String OPERATION_REMOVE_PORT_OK = "removePortOK";
+	public static final String OPERATION_REGISTER_SERVER_ADDRESS = "registerServerAddress";
+	public static final String OPERATION_ADDRESSOK = "addressOK";
+	public static final String OPERATION_REMOVE_SERVER_ADDRESS = "removeServerAddress";
+	public static final String OPERATION_REMOVE_ADDRESS_OK = "removeAddressOK";
 	public static final String OPERATION_GET_SERVER_ADDRESS = "getServerAddress";
 	public static final String OPERATION_SEND_SERVER_ADDRESS = "sendServerAddress";
 	public static final String OPERATION_PUBLISH = "publish";
